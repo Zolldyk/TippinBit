@@ -1,0 +1,36 @@
+'use client';
+
+import type { Address } from 'viem';
+import { Card } from '../atoms/Card';
+import { AddressDisplay } from './AddressDisplay';
+
+interface RecipientCardProps {
+  recipientAddress: Address;
+}
+
+/**
+ * RecipientCard displays the payment recipient's address with a "Supporting:" label.
+ *
+ * Features:
+ * - Truncated address display (0x742d...4a3f format)
+ * - Copy-to-clipboard functionality
+ * - Tooltip showing full address on hover/tap
+ * - 44px minimum touch target for mobile accessibility
+ * - Responsive padding (16px mobile, 24px desktop)
+ *
+ * @param recipientAddress - The Ethereum address of the payment recipient
+ */
+export function RecipientCard({ recipientAddress }: RecipientCardProps) {
+  return (
+    <Card variant="elevated" className="p-4 md:p-6">
+      <div className="flex flex-col gap-2">
+        <span className="text-sm text-neutral-600">Supporting:</span>
+        <AddressDisplay
+          address={recipientAddress}
+          shorten={true}
+          showCopy={true}
+        />
+      </div>
+    </Card>
+  );
+}
