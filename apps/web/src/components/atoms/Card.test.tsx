@@ -105,7 +105,7 @@ describe('Card', () => {
     });
 
     it('maintains proper text contrast', () => {
-      const { container } = render(
+      render(
         <Card variant="base">
           <p className="text-[var(--color-neutral-charcoal)]">
             High contrast text

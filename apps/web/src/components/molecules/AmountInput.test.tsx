@@ -5,7 +5,15 @@ import { useState } from 'react';
 import { AmountInput } from './AmountInput';
 
 // Controlled wrapper for stateful tests
-function ControlledAmountInput({ onChange, ...props }: any) {
+interface ControlledAmountInputProps {
+  onChange?: (value: string) => void;
+  value?: string;
+  label?: string;
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+function ControlledAmountInput({ onChange, ...props }: ControlledAmountInputProps) {
   const [value, setValue] = useState(props.value || '');
 
   const handleChange = (newValue: string) => {
