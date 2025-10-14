@@ -13,6 +13,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
     "@rainbow-me/rainbowkit": "2.2.8",
     "@tanstack/react-query": "5.90.2",
     "lucide-react": "^0.545.0",

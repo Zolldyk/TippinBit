@@ -5,6 +5,8 @@
  * for design system documentation and testing
  */
 
+'use client';
+
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card } from '@/components/atoms/Card';

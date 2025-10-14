@@ -9,6 +9,7 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   weight: ["400", "500", "600", "700"],
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -16,6 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
   weight: ["400", "500", "600", "700"],
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "monospace"],
 });
 
 export const metadata: Metadata = {
