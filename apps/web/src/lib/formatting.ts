@@ -66,3 +66,24 @@ export function parseAmountInput(input: string): string {
 
   return cleaned;
 }
+
+/**
+ * Calculates the maximum sendable amount after subtracting gas estimate.
+ * Returns 0 if the balance is insufficient to cover gas costs.
+ *
+ * @param balance - Available balance in wei (bigint)
+ * @param gasEstimate - Estimated gas cost in wei (bigint)
+ * @returns Maximum sendable amount in wei (bigint), or 0 if insufficient
+ *
+ * @example
+ * calculateMaxSendable(BigInt(100), BigInt(10)) // BigInt(90)
+ * calculateMaxSendable(BigInt(5), BigInt(10)) // BigInt(0) (insufficient)
+ * calculateMaxSendable(BigInt(50), BigInt(50)) // BigInt(0) (exact match)
+ */
+export function calculateMaxSendable(
+  balance: bigint,
+  gasEstimate: bigint
+): bigint {
+  const maxSendable = balance - gasEstimate;
+  return maxSendable > BigInt(0) ? maxSendable : BigInt(0);
+}

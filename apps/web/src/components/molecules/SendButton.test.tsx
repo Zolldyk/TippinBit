@@ -60,6 +60,33 @@ describe('SendButton', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveTextContent('Sending...');
     });
+
+    it('shows "Insufficient MUSD balance" when insufficientBalance is true', () => {
+      render(
+        <SendButton
+          amount="12.00"
+          disabled={false}
+          onClick={vi.fn()}
+          insufficientBalance={true}
+        />
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent('Insufficient MUSD balance');
+    });
+
+    it('prioritizes insufficientBalance message over valid amount', () => {
+      render(
+        <SendButton
+          amount="100.00"
+          disabled={false}
+          onClick={vi.fn()}
+          insufficientBalance={true}
+        />
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent('Insufficient MUSD balance');
+      expect(button).not.toHaveTextContent('Send $100.00');
+    });
   });
 
   describe('Disabled State (AC9)', () => {
@@ -103,6 +130,19 @@ describe('SendButton', () => {
       render(<SendButton amount="" disabled={false} onClick={vi.fn()} />);
       const button = screen.getByRole('button');
       // Button component handles disabled styling
+      expect(button).toBeDisabled();
+    });
+
+    it('is disabled when insufficientBalance is true', () => {
+      render(
+        <SendButton
+          amount="12.00"
+          disabled={false}
+          onClick={vi.fn()}
+          insufficientBalance={true}
+        />
+      );
+      const button = screen.getByRole('button');
       expect(button).toBeDisabled();
     });
   });
@@ -236,6 +276,19 @@ describe('SendButton', () => {
       render(<SendButton amount="12.00" disabled={false} onClick={vi.fn()} />);
       const button = screen.getByRole('button');
       expect(button).toHaveAttribute('aria-disabled', 'false');
+    });
+
+    it('has aria-label with insufficient balance message', () => {
+      render(
+        <SendButton
+          amount="12.00"
+          disabled={false}
+          onClick={vi.fn()}
+          insufficientBalance={true}
+        />
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveAttribute('aria-label', 'Send button: insufficient balance');
     });
 
     it('supports keyboard interaction (Enter key)', async () => {

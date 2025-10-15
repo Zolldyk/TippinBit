@@ -33,6 +33,11 @@ export interface SendButtonProps {
    * Loading state
    */
   isLoading?: boolean;
+
+  /**
+   * Insufficient balance state
+   */
+  insufficientBalance?: boolean;
 }
 
 /**
@@ -52,6 +57,7 @@ export function SendButton({
   disabled,
   onClick,
   isLoading = false,
+  insufficientBalance = false,
 }: SendButtonProps) {
   // Parse amount to check validity
   const numericAmount = parseFloat(amount);
@@ -59,14 +65,29 @@ export function SendButton({
 
   // Determine button label
   let label = 'Enter amount';
+  let labelClass = '';
+
   if (isLoading) {
     label = 'Sending...';
-  } else if (isValidAmount) {
+  } else if (insufficientBalance) {
+    label = 'Insufficient MUSD balance';
+    labelClass = 'text-red-600';
+  } else if (!isValidAmount) {
+    label = 'Enter amount';
+    labelClass = 'text-slate-400';
+  } else {
     label = `Send ${formatCurrency(amount)}`;
   }
 
   // Determine if button should be disabled
-  const isDisabled = disabled || !isValidAmount;
+  const isDisabled = disabled || !isValidAmount || insufficientBalance;
+
+  // Determine aria-label
+  const ariaLabel = insufficientBalance
+    ? 'Send button: insufficient balance'
+    : isValidAmount
+      ? `Send ${formatCurrency(amount)}`
+      : label;
 
   return (
     <Button
@@ -74,8 +95,8 @@ export function SendButton({
       onClick={onClick}
       disabled={isDisabled}
       loading={isLoading}
-      className="w-full sm:w-auto"
-      aria-label={isValidAmount ? `Send ${formatCurrency(amount)}` : label}
+      className={`w-full sm:w-auto ${labelClass}`}
+      aria-label={ariaLabel}
       aria-disabled={isDisabled}
     >
       {label}

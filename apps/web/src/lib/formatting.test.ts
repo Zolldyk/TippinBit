@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, parseAmountInput } from './formatting';
+import { formatCurrency, parseAmountInput, calculateMaxSendable } from './formatting';
 
 describe('formatCurrency', () => {
   it('formats whole numbers with 2 decimals', () => {
@@ -84,5 +84,45 @@ describe('parseAmountInput', () => {
   it('strips all non-numeric except decimal', () => {
     expect(parseAmountInput('abc123def')).toBe('123');
     expect(parseAmountInput('!@#$%^&*()12.34')).toBe('12.34');
+  });
+});
+
+describe('calculateMaxSendable', () => {
+  it('returns balance minus gas estimate', () => {
+    const result = calculateMaxSendable(BigInt(100), BigInt(10));
+    expect(result).toBe(BigInt(90));
+  });
+
+  it('returns 0 when gas exceeds balance', () => {
+    const result = calculateMaxSendable(BigInt(5), BigInt(10));
+    expect(result).toBe(BigInt(0));
+  });
+
+  it('returns 0 when balance is zero', () => {
+    const result = calculateMaxSendable(BigInt(0), BigInt(10));
+    expect(result).toBe(BigInt(0));
+  });
+
+  it('returns full balance when gas is zero', () => {
+    const result = calculateMaxSendable(BigInt(100), BigInt(0));
+    expect(result).toBe(BigInt(100));
+  });
+
+  it('returns 0 when balance equals gas (exact match)', () => {
+    const result = calculateMaxSendable(BigInt(50), BigInt(50));
+    expect(result).toBe(BigInt(0));
+  });
+
+  it('handles large values correctly', () => {
+    const result = calculateMaxSendable(
+      BigInt('1000000000000000000'),
+      BigInt('50000000000000000')
+    );
+    expect(result).toBe(BigInt('950000000000000000'));
+  });
+
+  it('returns 0 when result would be negative', () => {
+    const result = calculateMaxSendable(BigInt(1), BigInt(100));
+    expect(result).toBe(BigInt(0));
   });
 });

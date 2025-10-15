@@ -11,6 +11,30 @@ import { parseEther } from 'viem';
 import { PaymentForm } from '@/components/organisms/PaymentForm';
 import type { Address } from 'viem';
 
+// Mock Wagmi hooks
+vi.mock('wagmi', () => ({
+  useAccount: () => ({
+    address: '0x742d35Cc6874C97De156c9b9b3a3A3e3b10c2F5A' as Address,
+    isConnected: true,
+  }),
+  useBalance: () => ({
+    data: { value: parseEther('100'), decimals: 18, symbol: 'MUSD', formatted: '100' },
+    isLoading: false,
+    refetch: vi.fn(),
+  }),
+}));
+
+// Mock useBalanceMonitor hook
+vi.mock('@/hooks/useBalanceMonitor', () => ({
+  useBalanceMonitor: () => ({
+    balance: parseEther('100'), // 100 MUSD
+    balanceUsd: '100.00',
+    isLoading: false,
+    refetch: vi.fn(),
+    updateOptimistically: vi.fn(),
+  }),
+}));
+
 // Mock useGasEstimation hook
 vi.mock('@/hooks/useGasEstimation', () => ({
   useGasEstimation: ({ amount }: { amount: bigint }) => {
@@ -278,7 +302,7 @@ describe('PaymentForm Integration (Story 1.5)', () => {
       // Warning should show but SendButton should still be enabled
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
-        const sendButton = screen.getByRole('button', { name: /send/i });
+        const sendButton = screen.getByRole('button', { name: /send \$0\.25/i });
         expect(sendButton).not.toBeDisabled();
       });
     });
@@ -295,8 +319,8 @@ describe('PaymentForm Integration (Story 1.5)', () => {
       await user.type(input, '500');
       await user.tab(); // Format to $500.00
 
-      // Click SendButton
-      const sendButton = screen.getByRole('button', { name: /send/i });
+      // Click SendButton (not SendMaxButton)
+      const sendButton = screen.getByRole('button', { name: /send \$500/i });
       await user.click(sendButton);
 
       // Modal should appear
@@ -317,8 +341,8 @@ describe('PaymentForm Integration (Story 1.5)', () => {
       const chip25 = screen.getByRole('button', { name: 'Select 25 dollars' });
       await user.click(chip25);
 
-      // Click SendButton
-      const sendButton = screen.getByRole('button', { name: /send/i });
+      // Click SendButton (not SendMaxButton)
+      const sendButton = screen.getByRole('button', { name: /send \$25/i });
       await user.click(sendButton);
 
       // Modal should not appear, onSend should be called directly
@@ -419,7 +443,7 @@ describe('PaymentForm Integration (Story 1.5)', () => {
       await user.click(chip5);
 
       await waitFor(() => {
-        const sendButton = screen.getByRole('button', { name: /send/i });
+        const sendButton = screen.getByRole('button', { name: /send \$5/i });
         expect(sendButton).not.toBeDisabled();
       });
     });
@@ -513,8 +537,8 @@ describe('PaymentForm Integration (Story 1.5)', () => {
         expect(screen.getByText(/\$7\.65/)).toBeInTheDocument();
       });
 
-      // Step 5: Click SendButton
-      const sendButton = screen.getByRole('button', { name: /send/i });
+      // Step 5: Click SendButton (not SendMaxButton)
+      const sendButton = screen.getByRole('button', { name: /send \$7\.50/i });
       await user.click(sendButton);
 
       // Step 6: Verify onSend called

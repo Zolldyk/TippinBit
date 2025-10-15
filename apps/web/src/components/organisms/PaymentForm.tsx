@@ -11,14 +11,20 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
-import { parseEther, type Address } from 'viem';
+import { useState, useCallback, useMemo } from 'react';
+import { parseEther, formatEther, type Address } from 'viem';
+import { useAccount } from 'wagmi';
 import { AmountInput } from '../molecules/AmountInput';
 import { QuickAmountChips } from '../molecules/QuickAmountChips';
 import { GasFeeDisplay } from '../molecules/GasFeeDisplay';
 import { SendButton } from '../molecules/SendButton';
+import { BalanceDisplay } from '../molecules/BalanceDisplay';
+import { SendMaxButton } from '../molecules/SendMaxButton';
+import { InsufficientBalanceWarning } from '../molecules/InsufficientBalanceWarning';
 import { LargeAmountModal } from './LargeAmountModal';
 import { useGasEstimation } from '@/hooks/useGasEstimation';
+import { useBalanceMonitor } from '@/hooks/useBalanceMonitor';
+import { MUSD_ADDRESS } from '@/config/contracts';
 
 const LARGE_AMOUNT_THRESHOLD = 100; // $100
 
@@ -65,12 +71,31 @@ export function PaymentForm({
   const [showLargeAmountModal, setShowLargeAmountModal] =
     useState<boolean>(false);
 
+  // Get connected wallet address
+  const { address: walletAddress } = useAccount();
+
+  // Balance monitoring hook
+  const {
+    balance,
+    balanceUsd,
+    isLoading: isLoadingBalance,
+    refetch: refetchBalance,
+    updateOptimistically,
+  } = useBalanceMonitor({
+    address: walletAddress,
+    musdAddress: MUSD_ADDRESS!,
+  });
+
   // Convert amount string to bigint for gas estimation
   const amountBigInt =
     amount && parseFloat(amount) > 0 ? parseEther(amount) : BigInt(0);
 
   // Gas estimation hook
-  const { gasEstimateUsd, isLoading: isEstimatingGas } = useGasEstimation({
+  const {
+    gasEstimate,
+    gasEstimateUsd,
+    isLoading: isEstimatingGas,
+  } = useGasEstimation({
     amount: amountBigInt,
     recipientAddress,
   });
@@ -80,9 +105,28 @@ export function PaymentForm({
     setAmount(selectedAmount.toFixed(2));
   }, []);
 
+  // Calculate total cost and check insufficient balance
+  const totalCost = useMemo(() => {
+    return amountBigInt + (gasEstimate ?? BigInt(0));
+  }, [amountBigInt, gasEstimate]);
+
+  const hasInsufficientBalance = useMemo(() => {
+    if (balance === null || !gasEstimate) return false;
+    return totalCost > balance;
+  }, [balance, totalCost, gasEstimate]);
+
   // Handle send button click
-  const handleSendClick = useCallback(() => {
+  const handleSendClick = useCallback(async () => {
     const numericAmount = parseFloat(amount);
+
+    // Double-check balance before transaction
+    if (balance !== null && gasEstimate) {
+      await refetchBalance();
+      if (totalCost > balance) {
+        // Show insufficient balance warning (already shown in UI)
+        return;
+      }
+    }
 
     // Check if amount exceeds large amount threshold
     if (numericAmount > LARGE_AMOUNT_THRESHOLD) {
@@ -90,14 +134,22 @@ export function PaymentForm({
     } else {
       // Proceed with send
       onSend?.(amount);
+      // Update balance optimistically
+      if (amountBigInt > BigInt(0)) {
+        updateOptimistically(amountBigInt);
+      }
     }
-  }, [amount, onSend]);
+  }, [amount, onSend, balance, gasEstimate, totalCost, refetchBalance, amountBigInt, updateOptimistically]);
 
   // Handle large amount confirmation
   const handleLargeAmountConfirm = useCallback(() => {
     setShowLargeAmountModal(false);
     onSend?.(amount);
-  }, [amount, onSend]);
+    // Update balance optimistically
+    if (amountBigInt > BigInt(0)) {
+      updateOptimistically(amountBigInt);
+    }
+  }, [amount, onSend, amountBigInt, updateOptimistically]);
 
   // Handle large amount cancel
   const handleLargeAmountCancel = useCallback(() => {
@@ -108,16 +160,50 @@ export function PaymentForm({
   const numericAmount = parseFloat(amount);
   const isValidAmount = !isNaN(numericAmount) && numericAmount > 0;
 
+  // Handle SendMaxButton click
+  const handleSetMaxAmount = useCallback((maxAmount: bigint) => {
+    setAmount(formatEther(maxAmount));
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Balance display */}
+      {walletAddress && MUSD_ADDRESS && (
+        <BalanceDisplay
+          balance={balanceUsd}
+          isLoading={isLoadingBalance}
+          onRetry={refetchBalance}
+        />
+      )}
+
       {/* Quick amount chips */}
       <QuickAmountChips onSelectAmount={handleQuickAmountSelect} />
 
-      {/* Amount input */}
-      <AmountInput value={amount} onChange={setAmount} />
+      {/* Amount input with Send Max button */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex-1">
+          <AmountInput value={amount} onChange={setAmount} />
+        </div>
+        {balance !== null && balance > BigInt(0) && gasEstimate && (
+          <SendMaxButton
+            balance={balance}
+            gasEstimate={gasEstimate}
+            onSetAmount={handleSetMaxAmount}
+          />
+        )}
+      </div>
+
+      {/* Insufficient balance warning */}
+      {hasInsufficientBalance && balanceUsd && gasEstimateUsd && (
+        <InsufficientBalanceWarning
+          balance={balanceUsd}
+          tipAmount={amount}
+          gasEstimate={gasEstimateUsd}
+        />
+      )}
 
       {/* Gas fee display */}
-      {isValidAmount && (
+      {isValidAmount && !hasInsufficientBalance && (
         <GasFeeDisplay
           tipAmount={amountBigInt}
           gasEstimateUsd={gasEstimateUsd}
@@ -128,8 +214,9 @@ export function PaymentForm({
       {/* Send button */}
       <SendButton
         amount={amount}
-        disabled={!isValidAmount}
+        disabled={!isValidAmount || hasInsufficientBalance}
         onClick={handleSendClick}
+        insufficientBalance={hasInsufficientBalance}
       />
 
       {/* Large amount confirmation modal */}
