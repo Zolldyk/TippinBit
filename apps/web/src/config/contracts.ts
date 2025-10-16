@@ -20,7 +20,10 @@ const validateMUSDAddress = (): Address | undefined => {
 
 export const MUSD_ADDRESS = validateMUSDAddress();
 
-// Minimal ERC-20 ABI for balanceOf
+/**
+ * ERC-20 ABI for MUSD token interactions.
+ * Includes balanceOf (view) and transfer (write) functions.
+ */
 export const ERC20_ABI = [
   {
     name: 'balanceOf',
@@ -28,5 +31,15 @@ export const ERC20_ABI = [
     stateMutability: 'view',
     inputs: [{ name: 'account', type: 'address' }],
     outputs: [{ name: 'balance', type: 'uint256' }],
+  },
+  {
+    name: 'transfer',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: 'success', type: 'bool' }],
   },
 ] as const;

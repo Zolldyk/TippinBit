@@ -15,6 +15,10 @@ const REFRESH_INTERVAL_MS = 30000;
 // Debounce delay for amount changes (500ms)
 const AMOUNT_DEBOUNCE_MS = 500;
 
+// Default fallback gas limit (200,000 gas units)
+// Standard ERC-20 transfer is 50k-150k, using 200k provides safe buffer
+const FALLBACK_GAS_LIMIT = BigInt(200000);
+
 interface UseGasEstimationParams {
   amount: bigint;
   recipientAddress: Address;
@@ -24,6 +28,7 @@ interface UseGasEstimationReturn {
   gasEstimate: bigint | null;
   gasEstimateUsd: string | null;
   isLoading: boolean;
+  gasEstimationFailed: boolean;
   error: Error | null;
   refetch: () => void;
 }
@@ -49,6 +54,7 @@ export function useGasEstimation({
   const [gasEstimate, setGasEstimate] = useState<bigint | null>(null);
   const [gasEstimateUsd, setGasEstimateUsd] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [gasEstimationFailed, setGasEstimationFailed] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [refetchTrigger, setRefetchTrigger] = useState<number>(0);
 
@@ -111,8 +117,23 @@ export function useGasEstimation({
           setError(
             err instanceof Error ? err : new Error('Failed to estimate gas')
           );
-          setGasEstimate(null);
-          setGasEstimateUsd(null);
+          setGasEstimationFailed(true);
+
+          // Use fallback gas limit
+          try {
+            const gasPrice = await publicClient.getGasPrice();
+            const fallbackGasCostWei = FALLBACK_GAS_LIMIT * gasPrice;
+            const fallbackGasCostEth = formatEther(fallbackGasCostWei);
+            const fallbackGasCostUsd = Number(fallbackGasCostEth) * ETH_PRICE_USD;
+
+            setGasEstimate(fallbackGasCostWei);
+            setGasEstimateUsd(fallbackGasCostUsd.toFixed(2));
+          } catch {
+            // If even fallback fails, set null
+            setGasEstimate(null);
+            setGasEstimateUsd(null);
+          }
+
           setIsLoading(false);
         }
       }
@@ -137,6 +158,7 @@ export function useGasEstimation({
     gasEstimate,
     gasEstimateUsd,
     isLoading,
+    gasEstimationFailed,
     error,
     refetch,
   };

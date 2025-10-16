@@ -7,13 +7,15 @@
  * - Economic viability warnings
  * - Large amount confirmation modal
  * - Send button with dynamic labeling
+ * - MUSD transfer execution with transaction tracking
  */
 
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { parseEther, formatEther, type Address } from 'viem';
 import { useAccount } from 'wagmi';
+import { useRouter } from 'next/navigation';
 import { AmountInput } from '../molecules/AmountInput';
 import { QuickAmountChips } from '../molecules/QuickAmountChips';
 import { GasFeeDisplay } from '../molecules/GasFeeDisplay';
@@ -21,9 +23,12 @@ import { SendButton } from '../molecules/SendButton';
 import { BalanceDisplay } from '../molecules/BalanceDisplay';
 import { SendMaxButton } from '../molecules/SendMaxButton';
 import { InsufficientBalanceWarning } from '../molecules/InsufficientBalanceWarning';
+import { TransactionStatus } from '../molecules/TransactionStatus';
 import { LargeAmountModal } from './LargeAmountModal';
 import { useGasEstimation } from '@/hooks/useGasEstimation';
 import { useBalanceMonitor } from '@/hooks/useBalanceMonitor';
+import { useMUSDTransfer } from '@/hooks/useMUSDTransfer';
+import { parseContractError } from '@/lib/error-parser';
 import { MUSD_ADDRESS } from '@/config/contracts';
 
 const LARGE_AMOUNT_THRESHOLD = 100; // $100
@@ -74,6 +79,9 @@ export function PaymentForm({
   // Get connected wallet address
   const { address: walletAddress } = useAccount();
 
+  // Router for redirects
+  const router = useRouter();
+
   // Balance monitoring hook
   const {
     balance,
@@ -95,9 +103,27 @@ export function PaymentForm({
     gasEstimate,
     gasEstimateUsd,
     isLoading: isEstimatingGas,
+    gasEstimationFailed,
   } = useGasEstimation({
     amount: amountBigInt,
     recipientAddress,
+  });
+
+  // MUSD transfer hook
+  const {
+    sendTransaction,
+    txHash,
+    state: txState,
+    isPending,
+    isConfirming,
+    isSuccess,
+    isError,
+    error: txError,
+    startTime,
+    reset: resetTransaction,
+  } = useMUSDTransfer({
+    recipient: recipientAddress,
+    amount: amount || '0',
   });
 
   // Handle quick amount chip selection
@@ -132,24 +158,27 @@ export function PaymentForm({
     if (numericAmount > LARGE_AMOUNT_THRESHOLD) {
       setShowLargeAmountModal(true);
     } else {
-      // Proceed with send
+      // Execute transaction
+      await sendTransaction();
       onSend?.(amount);
       // Update balance optimistically
       if (amountBigInt > BigInt(0)) {
         updateOptimistically(amountBigInt);
       }
     }
-  }, [amount, onSend, balance, gasEstimate, totalCost, refetchBalance, amountBigInt, updateOptimistically]);
+  }, [amount, onSend, balance, gasEstimate, totalCost, refetchBalance, amountBigInt, updateOptimistically, sendTransaction]);
 
   // Handle large amount confirmation
-  const handleLargeAmountConfirm = useCallback(() => {
+  const handleLargeAmountConfirm = useCallback(async () => {
     setShowLargeAmountModal(false);
+    // Execute transaction
+    await sendTransaction();
     onSend?.(amount);
     // Update balance optimistically
     if (amountBigInt > BigInt(0)) {
       updateOptimistically(amountBigInt);
     }
-  }, [amount, onSend, amountBigInt, updateOptimistically]);
+  }, [amount, onSend, amountBigInt, updateOptimistically, sendTransaction]);
 
   // Handle large amount cancel
   const handleLargeAmountCancel = useCallback(() => {
@@ -164,6 +193,38 @@ export function PaymentForm({
   const handleSetMaxAmount = useCallback((maxAmount: bigint) => {
     setAmount(formatEther(maxAmount));
   }, []);
+
+  // Handle successful transaction (Task 8: redirect to confirmation page)
+  useEffect(() => {
+    if (isSuccess && txHash) {
+      // Wait 1 second to show success status, then redirect
+      const timeout = setTimeout(() => {
+        router.push(`/confirmation?tx=${txHash}`);
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isSuccess, txHash, router]);
+
+  // Handle transaction errors (Task 9: inline error handling)
+  useEffect(() => {
+    if (isError && txError) {
+      const parsedError = parseContractError(txError);
+      // If user rejection, silently reset (no error shown)
+      if (parsedError.isUserRejection) {
+        resetTransaction();
+      }
+      // For other errors, TransactionStatus component will display them
+    }
+  }, [isError, txError, resetTransaction]);
+
+  // Reset transaction when amount changes
+  useEffect(() => {
+    if (txState !== 'idle') {
+      resetTransaction();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount]); // Only amount changes, not txState or resetTransaction to avoid loops
 
   return (
     <div className="flex flex-col gap-6">
@@ -208,6 +269,17 @@ export function PaymentForm({
           tipAmount={amountBigInt}
           gasEstimateUsd={gasEstimateUsd}
           isLoading={isEstimatingGas}
+          gasEstimationFailed={gasEstimationFailed}
+        />
+      )}
+
+      {/* Transaction status display */}
+      {txState !== 'idle' && (
+        <TransactionStatus
+          state={txState}
+          txHash={txHash}
+          error={txError}
+          startTime={startTime}
         />
       )}
 
@@ -215,6 +287,7 @@ export function PaymentForm({
       <SendButton
         amount={amount}
         disabled={!isValidAmount || hasInsufficientBalance}
+        isLoading={isPending || isConfirming}
         onClick={handleSendClick}
         insufficientBalance={hasInsufficientBalance}
       />

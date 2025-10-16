@@ -29,6 +29,11 @@ export interface GasFeeDisplayProps {
    * Loading state
    */
   isLoading: boolean;
+
+  /**
+   * Gas estimation failed flag (shows fallback warning)
+   */
+  gasEstimationFailed?: boolean;
 }
 
 /**
@@ -47,6 +52,7 @@ export function GasFeeDisplay({
   tipAmount,
   gasEstimateUsd,
   isLoading,
+  gasEstimationFailed = false,
 }: GasFeeDisplayProps) {
   // Skip rendering if no tip amount
   if (tipAmount === BigInt(0)) {
@@ -86,6 +92,25 @@ export function GasFeeDisplay({
 
   return (
     <div className="flex flex-col gap-2" aria-live="polite">
+      {/* Gas estimation fallback warning */}
+      {gasEstimationFailed && (
+        <div
+          className="flex items-start gap-2 p-3 rounded-[var(--radius-card)] bg-amber-50 border border-amber-200"
+          role="alert"
+        >
+          <AlertTriangle
+            size={20}
+            strokeWidth={1.5}
+            className="text-amber-600 flex-shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
+          <p className="text-[0.875rem] text-amber-800">
+            Unable to estimate gas. Using default estimate. Transaction may fail or
+            cost more.
+          </p>
+        </div>
+      )}
+
       {/* Total cost display */}
       <p className="text-[0.875rem] text-[var(--color-neutral-600)]">
         Total cost: ~{formatCurrency(totalCostUsd.toFixed(2))} (includes ~
@@ -93,7 +118,7 @@ export function GasFeeDisplay({
       </p>
 
       {/* Economic viability warning */}
-      {isUneconomical && (
+      {isUneconomical && !gasEstimationFailed && (
         <div
           className="flex items-start gap-2 p-3 rounded-[var(--radius-card)] bg-amber-50 border border-amber-200"
           role="alert"
