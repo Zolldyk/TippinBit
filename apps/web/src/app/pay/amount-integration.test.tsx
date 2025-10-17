@@ -394,7 +394,6 @@ describe('PaymentForm Integration (Story 1.5)', () => {
     });
 
     it('modal Cancel button closes modal', async () => {
-      const user = userEvent.setup();
       // Skip this test as it requires balance > $100 to test modal with amount > $100
       // In current mock setup, balance is $100, so amounts > $100 trigger insufficient balance warning
       // This test would need a mock with higher balance ($500+) to properly test the modal
@@ -402,7 +401,6 @@ describe('PaymentForm Integration (Story 1.5)', () => {
     });
 
     it('modal Confirm button calls onSend', async () => {
-      const user = userEvent.setup();
       // Skip this test as it requires balance > $100 to test modal with amount > $100
       // Same issue as previous test - mock balance is $100, can't test $500 amount
       // This functionality is covered by the "amounts under $100 do not trigger modal" test

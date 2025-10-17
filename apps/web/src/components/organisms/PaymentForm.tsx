@@ -254,22 +254,22 @@ export function PaymentForm({
         )}
       </div>
 
+      {/* Gas fee display - show for all valid amounts */}
+      {isValidAmount && (
+        <GasFeeDisplay
+          tipAmount={amountBigInt}
+          gasEstimateUsd={gasEstimateUsd}
+          isLoading={isEstimatingGas}
+          gasEstimationFailed={gasEstimationFailed}
+        />
+      )}
+
       {/* Insufficient balance warning */}
       {hasInsufficientBalance && balanceUsd && gasEstimateUsd && (
         <InsufficientBalanceWarning
           balance={balanceUsd}
           tipAmount={amount}
           gasEstimate={gasEstimateUsd}
-        />
-      )}
-
-      {/* Gas fee display */}
-      {isValidAmount && !hasInsufficientBalance && (
-        <GasFeeDisplay
-          tipAmount={amountBigInt}
-          gasEstimateUsd={gasEstimateUsd}
-          isLoading={isEstimatingGas}
-          gasEstimationFailed={gasEstimationFailed}
         />
       )}
 

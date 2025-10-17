@@ -2,7 +2,8 @@ import { isAddress, type Address } from 'viem';
 
 // Validate MUSD address from environment
 const validateMUSDAddress = (): Address | undefined => {
-  const address = process.env['NEXT_PUBLIC_MUSD_ADDRESS'];
+  // Use testnet address for now (testnet is the default chain)
+  const address = process.env['NEXT_PUBLIC_MUSD_ADDRESS_TESTNET'];
 
   if (!address || address === '0x...') {
     // Placeholder not configured yet
@@ -11,7 +12,7 @@ const validateMUSDAddress = (): Address | undefined => {
 
   if (!isAddress(address)) {
     throw new Error(
-      'MUSD address not configured or invalid. Check NEXT_PUBLIC_MUSD_ADDRESS in .env.local'
+      'MUSD address not configured or invalid. Check NEXT_PUBLIC_MUSD_ADDRESS_TESTNET in .env.local'
     );
   }
 
