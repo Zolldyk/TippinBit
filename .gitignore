@@ -31,6 +31,9 @@ dist/
 # QA/Testing
 LIVE_TESTING_REPORT.md
 .playwright-mcp/
+playwright-report/
+test-results/
+VERIFICATION_REPORT.md
 
 # Debug
 npm-debug.log*

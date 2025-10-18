@@ -4,6 +4,8 @@ import type { Address } from 'viem';
 import { validateTxHash } from '@/lib/error-parser';
 import { TransactionConfirmationContent } from '@/components/organisms/TransactionConfirmationContent';
 
+export const dynamic = 'force-dynamic';
+
 interface ConfirmationPageProps {
   searchParams: {
     tx?: string;

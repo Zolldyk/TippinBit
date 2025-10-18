@@ -112,7 +112,10 @@ export function TransactionConfirmationContent({
 
       {/* Social sharing section */}
       <div className="mb-6 flex justify-center">
-        <SocialShareButton recipient={recipient} txHash={txHash} />
+        <SocialShareButton
+          {...(recipient !== undefined && { recipient })}
+          txHash={txHash}
+        />
       </div>
 
       {/* Return to creator button (only shown if external referrer detected) */}
