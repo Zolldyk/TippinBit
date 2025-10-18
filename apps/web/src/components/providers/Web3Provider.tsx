@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
-import { wagmiConfig } from '@/config/wagmi';
+import { createWagmiConfig } from '@/config/wagmi';
 import { ReactNode, useState } from 'react';
 
 import '@rainbow-me/rainbowkit/styles.css';
@@ -21,6 +21,7 @@ const tippinbitTheme = darkTheme({
 });
 
 export function Web3Provider({ children }: Web3ProviderProps) {
+  const [config] = useState(() => createWagmiConfig());
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -34,7 +35,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
   );
 
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={tippinbitTheme} modalSize="compact">
           {children}
