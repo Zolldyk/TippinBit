@@ -76,6 +76,16 @@ export function PaymentForm({
   const [showLargeAmountModal, setShowLargeAmountModal] =
     useState<boolean>(false);
 
+  // Failure counter state (AC7: Track repeated failures)
+  const [failureCount, setFailureCount] = useState<number>(() => {
+    // Load from sessionStorage on mount
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('tx_failure_count');
+      return stored ? parseInt(stored, 10) : 0;
+    }
+    return 0;
+  });
+
   // Get connected wallet address
   const { address: walletAddress } = useAccount();
 
@@ -197,14 +207,24 @@ export function PaymentForm({
   // Handle successful transaction (Task 8: redirect to confirmation page)
   useEffect(() => {
     if (isSuccess && txHash) {
+      // Reset failure counter on successful transaction (AC7)
+      setFailureCount(0);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('tx_failure_count', '0');
+      }
+
       // Wait 1 second to show success status, then redirect
       const timeout = setTimeout(() => {
-        router.push(`/confirmation?tx=${txHash}`);
+        // Format amount to 2 decimal places for URL
+        const formattedAmount = parseFloat(amount).toFixed(2);
+        // Build confirmation URL with amount and recipient
+        const confirmationUrl = `/confirmation?tx=${txHash}&amount=${formattedAmount}&recipient=${encodeURIComponent(recipientAddress)}`;
+        router.push(confirmationUrl);
       }, 1000);
 
       return () => clearTimeout(timeout);
     }
-  }, [isSuccess, txHash, router]);
+  }, [isSuccess, txHash, router, amount, recipientAddress]);
 
   // Handle transaction errors (Task 9: inline error handling)
   useEffect(() => {
@@ -213,10 +233,17 @@ export function PaymentForm({
       // If user rejection, silently reset (no error shown)
       if (parsedError.isUserRejection) {
         resetTransaction();
+      } else {
+        // Increment failure counter for non-rejection errors (AC7)
+        const newCount = failureCount + 1;
+        setFailureCount(newCount);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('tx_failure_count', newCount.toString());
+        }
       }
       // For other errors, TransactionStatus component will display them
     }
-  }, [isError, txError, resetTransaction]);
+  }, [isError, txError, resetTransaction, failureCount]);
 
   // Reset transaction when amount changes
   useEffect(() => {
@@ -281,6 +308,68 @@ export function PaymentForm({
           error={txError}
           startTime={startTime}
         />
+      )}
+
+      {/* Help section after 3 failures (AC7) */}
+      {failureCount >= 3 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <h3 className="text-sm font-semibold text-amber-900 mb-3">
+            Need help?
+          </h3>
+          <p className="text-sm text-amber-800 mb-4">
+            Having trouble? Here are some resources:
+          </p>
+          <div className="space-y-3">
+            <div>
+              <a
+                href="https://faucet.test.mezo.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-amber-700 hover:text-amber-900 underline"
+              >
+                Get MUSD from testnet faucet
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                  />
+                </svg>
+              </a>
+            </div>
+            <div>
+              <a
+                href="https://docs.mezo.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-amber-700 hover:text-amber-900 underline"
+              >
+                View troubleshooting guide
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Send button */}

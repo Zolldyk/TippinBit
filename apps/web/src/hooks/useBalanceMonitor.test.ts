@@ -183,16 +183,17 @@ describe('useBalanceMonitor', () => {
       })
     );
 
-    // Send 5 MUSD
-    result.current.updateOptimistically(parseEther('5'));
+    // Send 5 MUSD (this triggers setTimeout internally)
+    const updatePromise = result.current.updateOptimistically(parseEther('5'));
 
-    // Fast-forward time by 1 second
-    vi.advanceTimersByTime(1000);
+    // Fast-forward time by 1 second to trigger the setTimeout
+    await vi.advanceTimersByTimeAsync(1000);
+
+    // Wait for the update to complete
+    await updatePromise;
 
     // Refetch should be called after 1 second
-    await waitFor(() => {
-      expect(mockRefetch).toHaveBeenCalled();
-    });
+    expect(mockRefetch).toHaveBeenCalled();
 
     vi.useRealTimers();
   });
@@ -310,24 +311,31 @@ describe('useBalanceMonitor', () => {
       })
     );
 
-    // Apply optimistic update
-    result.current.updateOptimistically(parseEther('5'));
+    // Initial balance should be from chain
+    expect(result.current.balance).toBe(parseEther('15.30'));
+
+    // Apply optimistic update (without waiting for setTimeout/refetch)
+    const updatePromise = result.current.updateOptimistically(parseEther('5'));
     rerender();
 
-    await waitFor(() => {
-      expect(result.current.balance).toBe(parseEther('10.30'));
-    });
+    // Balance should be optimistically reduced
+    expect(result.current.balance).toBe(parseEther('10.30'));
 
-    // Call refetch manually
+    // Call refetch manually - this clears optimistic state
     await result.current.refetch();
 
     // Should call wagmi refetch
     expect(mockRefetch).toHaveBeenCalled();
 
-    // After refetch, should return to chain balance
+    // Rerender to apply cleared optimistic state
     rerender();
-    await waitFor(() => {
-      expect(result.current.balance).toBe(parseEther('15.30'));
+
+    // After refetch, should return to chain balance (optimistic cleared)
+    expect(result.current.balance).toBe(parseEther('15.30'));
+
+    // Clean up the pending update promise
+    await updatePromise.catch(() => {
+      // Ignore errors from the optimistic update timeout
     });
   });
 
@@ -352,15 +360,18 @@ describe('useBalanceMonitor', () => {
     );
 
     // Try to send 10 MUSD (more than balance)
-    result.current.updateOptimistically(parseEther('10'));
+    const updatePromise = result.current.updateOptimistically(parseEther('10'));
 
     // Rerender to apply state change
     rerender();
 
     // Balance should be 0, not negative
-    await waitFor(() => {
-      expect(result.current.balance).toBe(BigInt(0));
-      expect(result.current.balanceUsd).toBe('0.00');
+    expect(result.current.balance).toBe(BigInt(0));
+    expect(result.current.balanceUsd).toBe('0.00');
+
+    // Clean up the pending update promise
+    await updatePromise.catch(() => {
+      // Ignore errors from the optimistic update timeout
     });
   });
 
@@ -388,12 +399,11 @@ describe('useBalanceMonitor', () => {
     );
 
     // Apply optimistic update (send 5 MUSD)
-    result.current.updateOptimistically(parseEther('5'));
+    const updatePromise = result.current.updateOptimistically(parseEther('5'));
     rerender();
 
-    await waitFor(() => {
-      expect(result.current.balance).toBe(parseEther('10.30'));
-    });
+    // Balance should be optimistically reduced
+    expect(result.current.balance).toBe(parseEther('10.30'));
 
     // Simulate chain balance updating to reflect transaction
     const updatedMockBalance = {
@@ -408,12 +418,16 @@ describe('useBalanceMonitor', () => {
     };
     vi.mocked(useBalance).mockReturnValue(updatedMockBalance as unknown as UseBalanceReturnType);
 
-    // Rerender to trigger useEffect
+    // Rerender to trigger useEffect that clears optimistic balance
     rerender();
 
-    await waitFor(() => {
-      // Optimistic balance should be cleared, now using chain balance
-      expect(result.current.balance).toBe(parseEther('10.30'));
+    // Optimistic balance should be cleared, now using chain balance
+    // The balance is still 10.30 but now from chain data, not optimistic
+    expect(result.current.balance).toBe(parseEther('10.30'));
+
+    // Clean up the pending update promise
+    await updatePromise.catch(() => {
+      // Ignore errors from the optimistic update timeout
     });
   });
 });

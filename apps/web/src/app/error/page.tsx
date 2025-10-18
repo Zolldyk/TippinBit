@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { AlertCircle, Copy, ExternalLink } from 'lucide-react';
+import { AlertCircle, Copy, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { validateTxHash } from '@/lib/error-parser';
 
 /**
  * TransactionErrorPage displays friendly error messages when a transaction fails.
@@ -13,24 +14,80 @@ import { AlertCircle, Copy, ExternalLink } from 'lucide-react';
  * - Mezo testnet explorer link
  * - "Try again" button to return to payment page
  * - Help section with relevant resources
+ * - URL parameter validation and sanitization
+ * - Error type-specific messaging
+ * - Console logging for debugging
+ * - Sentry integration placeholder
  *
- * URL: /error?tx=0x...&message=Error+message
+ * URL: /error?type=tx_failed&hash=0x...&reason=out_of_gas
+ * Legacy URL: /error?tx=0x...&message=Error+message (backward compatible)
  */
 function TransactionErrorContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const txHash = searchParams.get('tx');
-  const errorMessage = searchParams.get('message');
+  // Validate and sanitize URL parameters
+  const rawType = searchParams.get('type');
+  const rawHash = searchParams.get('hash') || searchParams.get('tx'); // Support legacy 'tx' param
+  const rawReason = searchParams.get('reason') || searchParams.get('message'); // Support legacy 'message' param
+
+  // Whitelist valid error types
+  const validTypes = ['tx_failed', 'timeout', 'gas_error', 'contract_error'];
+  const errorType = rawType && validTypes.includes(rawType) ? rawType : 'tx_failed';
+
+  // Validate transaction hash
+  const txHash = rawHash && validateTxHash(rawHash) ? rawHash : null;
+
+  // Sanitize reason (escape HTML, limit length)
+  const sanitizeReason = (reason: string | null): string => {
+    if (!reason) return '';
+    // Limit length to 200 chars and escape HTML entities
+    const truncated = reason.slice(0, 200);
+    return truncated
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const reason = sanitizeReason(rawReason);
 
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showExplorerDetails, setShowExplorerDetails] = useState(false);
 
   // Trigger fade-in animation
   useEffect(() => {
     const timeout = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timeout);
   }, []);
+
+  // Log error details to console (AC10)
+  useEffect(() => {
+    console.error('Transaction Error:', {
+      txHash,
+      errorType,
+      reason,
+      timestamp: new Date().toISOString(),
+    });
+
+    // TODO: Production - Enable Sentry integration
+    // if (process.env.NODE_ENV === 'production') {
+    //   Sentry.captureException(new Error(reason || 'Transaction failed'), {
+    //     contexts: {
+    //       transaction: {
+    //         hash: txHash,
+    //         errorType,
+    //         reason,
+    //       },
+    //     },
+    //     tags: {
+    //       errorType,
+    //     },
+    //   });
+    // }
+  }, [txHash, errorType, reason]);
 
   // Handle copy transaction hash
   const handleCopyTxHash = async () => {
@@ -54,10 +111,32 @@ function TransactionErrorContent() {
     return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
   };
 
+  // Get error type-specific message (AC5, AC6)
+  const getErrorMessage = (): string => {
+    if (reason) {
+      return reason;
+    }
+
+    // Default messages based on error type
+    switch (errorType) {
+      case 'gas_error':
+        return 'Transaction failed due to network fee. Try again with higher gas or reduce tip amount.';
+      case 'timeout':
+        return 'Connection lost. Your funds are safe. Retry now?';
+      case 'contract_error':
+        return 'Transaction failed on the blockchain. Your funds are safe.';
+      case 'tx_failed':
+      default:
+        return 'We know this is frustrating. Transaction failed. Your funds are safe.';
+    }
+  };
+
+  const errorMessage = getErrorMessage();
+
   // Determine if this is an insufficient funds error
   const isInsufficientFunds =
-    errorMessage?.toLowerCase().includes('insufficient') ||
-    errorMessage?.toLowerCase().includes('balance');
+    errorMessage.toLowerCase().includes('insufficient') ||
+    errorMessage.toLowerCase().includes('balance');
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
@@ -85,30 +164,62 @@ function TransactionErrorContent() {
             <h2 className="text-sm font-medium text-amber-800">What went wrong</h2>
           </div>
 
-          <p className="text-sm text-slate-700">
-            {errorMessage || 'Transaction failed. Your funds are safe.'}
-          </p>
+          <p className="text-sm text-slate-700">{errorMessage}</p>
 
           {txHash && (
-            <div className="mt-4 rounded-md bg-slate-50 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="mb-1 text-xs font-medium text-slate-500">
-                    Transaction ID
-                  </p>
-                  <code className="text-xs font-mono text-slate-700">
-                    {truncateHash(txHash)}
-                  </code>
+            <>
+              <div className="mt-4 rounded-md bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-slate-500">
+                      Transaction ID
+                    </p>
+                    <code className="text-xs font-mono text-slate-700">
+                      {truncateHash(txHash)}
+                    </code>
+                  </div>
+                  <button
+                    onClick={handleCopyTxHash}
+                    className="rounded-md border border-slate-300 p-2 hover:bg-slate-100"
+                    aria-label="Copy transaction hash"
+                  >
+                    <Copy className="h-4 w-4 text-slate-600" />
+                  </button>
                 </div>
-                <button
-                  onClick={handleCopyTxHash}
-                  className="rounded-md border border-slate-300 p-2 hover:bg-slate-100"
-                  aria-label="Copy transaction hash"
-                >
-                  <Copy className="h-4 w-4 text-slate-600" />
-                </button>
               </div>
-            </div>
+
+              {/* Collapsible explorer section */}
+              <div className="mt-4">
+                <button
+                  onClick={() => setShowExplorerDetails(!showExplorerDetails)}
+                  className="flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700"
+                >
+                  {showExplorerDetails ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  View transaction on Mezo Explorer
+                </button>
+
+                {showExplorerDetails && explorerLink && (
+                  <div className="mt-3 rounded-md bg-slate-50 p-4">
+                    <a
+                      href={explorerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open in Mezo Testnet Explorer
+                    </a>
+                    <p className="mt-2 text-xs text-slate-500">
+                      View full transaction details, gas fees, and confirmation status on the blockchain explorer.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 

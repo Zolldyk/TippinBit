@@ -17,6 +17,9 @@ vi.mock('wagmi', () => ({
     switchChain: mockSwitchChain,
     isPending: false,
   })),
+  useConnect: vi.fn(() => ({
+    connectors: [{ id: 'injected', name: 'MetaMask' }],
+  })),
 }));
 
 vi.mock('@rainbow-me/rainbowkit', () => ({

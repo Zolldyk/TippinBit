@@ -32,8 +32,9 @@ describe('parseContractError', () => {
     const result = parseContractError(error);
 
     expect(result.isUserRejection).toBe(false);
-    expect(result.code).toBe('TX_FAILED');
+    expect(result.code).toBe('CONTRACT_REVERT');
     expect(result.userMessage).toBe('Transaction failed on the blockchain. Your funds are safe.');
+    expect(result.severity).toBe('error');
   });
 
   it('returns user-friendly message for ContractFunctionExecutionError', () => {
@@ -43,8 +44,9 @@ describe('parseContractError', () => {
     const result = parseContractError(error);
 
     expect(result.isUserRejection).toBe(false);
-    expect(result.code).toBe('TX_FAILED');
+    expect(result.code).toBe('CONTRACT_REVERT');
     expect(result.userMessage).toBe('Transaction failed on the blockchain. Your funds are safe.');
+    expect(result.severity).toBe('error');
   });
 
   it('returns user-friendly message for EstimateGasExecutionError', () => {
@@ -77,7 +79,9 @@ describe('parseContractError', () => {
 
     expect(result.isUserRejection).toBe(false);
     expect(result.code).toBe('TIMEOUT');
-    expect(result.userMessage).toBe('Transaction confirmation timed out. Check explorer.');
+    expect(result.userMessage).toBe('Connection lost. Your funds are safe. Retry now?');
+    expect(result.severity).toBe('warning');
+    expect(result.actionable).toBe('Retry transaction');
   });
 
   it('returns user-friendly message for insufficient funds in error message', () => {
@@ -109,6 +113,93 @@ describe('parseContractError', () => {
     expect(result.isUserRejection).toBe(false);
     expect(result.code).toBe('UNKNOWN');
     expect(result.userMessage).toBe('An unexpected error occurred. Please try again.');
+  });
+
+  it('returns specific message for out of gas error', () => {
+    const error = new BaseError('Transaction failed: out of gas');
+
+    const result = parseContractError(error);
+
+    expect(result.isUserRejection).toBe(false);
+    expect(result.code).toBe('OUT_OF_GAS');
+    expect(result.userMessage).toBe(
+      'Transaction failed due to network fee. Try again with higher gas or reduce tip amount.'
+    );
+    expect(result.severity).toBe('warning');
+    expect(result.actionable).toBe('Try again with higher gas or reduce tip amount');
+  });
+
+  it('returns specific message for gas required exceeds allowance', () => {
+    const error = new BaseError('gas required exceeds allowance');
+
+    const result = parseContractError(error);
+
+    expect(result.code).toBe('OUT_OF_GAS');
+    expect(result.severity).toBe('warning');
+  });
+
+  it('returns specific message for RPC connection failure', () => {
+    const error = new BaseError('Network error: fetch failed');
+    error.name = 'HttpRequestError';
+
+    const result = parseContractError(error);
+
+    expect(result.isUserRejection).toBe(false);
+    expect(result.code).toBe('RPC_CONNECTION_FAILED');
+    expect(result.userMessage).toBe('Unable to connect to the network. Please check your connection.');
+    expect(result.severity).toBe('warning');
+    expect(result.actionable).toBe('Check your internet connection and retry');
+  });
+
+  it('returns specific message for RpcRequestError', () => {
+    const error = new BaseError('RPC request failed');
+    error.name = 'RpcRequestError';
+
+    const result = parseContractError(error);
+
+    expect(result.code).toBe('RPC_CONNECTION_FAILED');
+    expect(result.severity).toBe('warning');
+  });
+
+  it('extracts revert reason from contract error', () => {
+    const error = new BaseError('Contract execution reverted\nrevert InsufficientBalance');
+    error.name = 'ContractFunctionRevertedError';
+
+    const result = parseContractError(error);
+
+    expect(result.code).toBe('CONTRACT_REVERT');
+    expect(result.userMessage).toContain('insufficientbalance'); // lowercase because error.message is lowercased
+    expect(result.userMessage).toContain('Your funds are safe');
+    expect(result.severity).toBe('error');
+  });
+
+  it('includes actionable field for insufficient funds', () => {
+    const error = new BaseError('Insufficient funds');
+    error.name = 'InsufficientFundsError';
+
+    const result = parseContractError(error);
+
+    expect(result.actionable).toBe('Get MUSD from testnet faucet');
+    expect(result.severity).toBe('warning');
+  });
+
+  it('includes actionable field for gas estimation failure', () => {
+    const error = new BaseError('Gas estimation failed');
+    error.name = 'EstimateGasExecutionError';
+
+    const result = parseContractError(error);
+
+    expect(result.actionable).toBe('Check your balance and try again');
+    expect(result.severity).toBe('warning');
+  });
+
+  it('includes actionable field for timeout', () => {
+    const error = new BaseError('Request timeout');
+    error.name = 'TimeoutError';
+
+    const result = parseContractError(error);
+
+    expect(result.actionable).toBe('Retry transaction');
   });
 });
 

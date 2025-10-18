@@ -14,7 +14,7 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center">
           <h1 className="text-5xl font-bold text-coral sm:text-6xl lg:text-7xl">
-            Tip Anyone on X
+            Tip Anyone, Anywhere
           </h1>
           <p className="mt-4 text-xl text-neutral-600 sm:text-2xl">
             Send Bitcoin-backed MUSD tips instantly
@@ -27,14 +27,14 @@ export default function Home() {
               onClick={() => setShowLinkGenerator(true)}
               className="min-w-[200px]"
             >
-              Create Payment Link <ArrowRight size={20} />
+              Create payment link <ArrowRight size={20} />
             </Button>
             <Button
               variant="secondary"
               onClick={() => window.location.href = '/showcase'}
               className="min-w-[200px]"
             >
-              View Design System
+              View design system
             </Button>
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function Home() {
               <Zap size={32} className="text-coral" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-              Instant Transfers
+              Instant transfers
             </h3>
             <p className="text-sm text-neutral-600">
               Send tips in seconds with real-time gas fee estimates
@@ -65,7 +65,7 @@ export default function Home() {
               <Shield size={32} className="text-teal" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-              Secure & Transparent
+              Secure & transparent
             </h3>
             <p className="text-sm text-neutral-600">
               Built on Mezo with Bitcoin-backed stablecoin security
@@ -77,7 +77,7 @@ export default function Home() {
               <Coins size={32} className="text-bitcoin" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-              Bitcoin-Backed
+              Bitcoin-backed
             </h3>
             <p className="text-sm text-neutral-600">
               MUSD is backed by Bitcoin for stability and trust
@@ -96,7 +96,7 @@ export default function Home() {
                 1
               </div>
               <h3 className="mb-2 font-semibold text-neutral-900">
-                Create Your Link
+                Create your link
               </h3>
               <p className="text-sm text-neutral-600">
                 Generate a shareable payment link with your wallet address
@@ -120,7 +120,7 @@ export default function Home() {
                 3
               </div>
               <h3 className="mb-2 font-semibold text-neutral-900">
-                Receive Tips
+                Receive tips
               </h3>
               <p className="text-sm text-neutral-600">
                 Supporters connect wallet, enter amount, and send MUSD instantly
