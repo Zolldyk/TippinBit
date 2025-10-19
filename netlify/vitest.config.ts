@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node', // Node.js environment for serverless functions
     globals: true,
-    include: ['netlify/functions/**/*.test.ts'],
+    include: ['netlify/tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -359,5 +359,3 @@ npx serve apps/web/out
 For issues and questions, please refer to the project documentation or contact the development team.
 
 ---
-
-Built with ❤️ for the Mezo Network Hackathon
