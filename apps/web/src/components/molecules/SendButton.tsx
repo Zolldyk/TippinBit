@@ -95,7 +95,7 @@ export function SendButton({
       onClick={onClick}
       disabled={isDisabled}
       loading={isLoading}
-      className={`w-full sm:w-auto ${labelClass}`}
+      className={`w-full sm:flex-1 ${labelClass}`}
       aria-label={ariaLabel}
       aria-disabled={isDisabled}
     >

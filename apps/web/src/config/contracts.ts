@@ -21,8 +21,29 @@ const validateMUSDAddress = (): Address | undefined => {
 
 export const MUSD_ADDRESS = validateMUSDAddress();
 
+// Validate BTC address from environment
+const validateBTCAddress = (): Address | undefined => {
+  // Use testnet address for now (testnet is the default chain)
+  const address = process.env['NEXT_PUBLIC_BTC_ADDRESS_TESTNET'];
+
+  if (!address || address === '0x...') {
+    // Placeholder not configured yet - TODO: Replace with actual Mezo testnet BTC token address
+    return undefined;
+  }
+
+  if (!isAddress(address)) {
+    throw new Error(
+      'BTC address not configured or invalid. Check NEXT_PUBLIC_BTC_ADDRESS_TESTNET in .env.local'
+    );
+  }
+
+  return address as Address;
+};
+
+export const BTC_ADDRESS = validateBTCAddress();
+
 /**
- * ERC-20 ABI for MUSD token interactions.
+ * ERC-20 ABI for token interactions (MUSD and BTC).
  * Includes balanceOf (view) and transfer (write) functions.
  */
 export const ERC20_ABI = [

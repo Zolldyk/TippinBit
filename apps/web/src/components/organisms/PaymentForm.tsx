@@ -20,14 +20,17 @@ import { AmountInput } from '../molecules/AmountInput';
 import { QuickAmountChips } from '../molecules/QuickAmountChips';
 import { GasFeeDisplay } from '../molecules/GasFeeDisplay';
 import { SendButton } from '../molecules/SendButton';
+import { TipWithBtcButton } from '../molecules/TipWithBtcButton';
 import { BalanceDisplay } from '../molecules/BalanceDisplay';
 import { SendMaxButton } from '../molecules/SendMaxButton';
 import { InsufficientBalanceWarning } from '../molecules/InsufficientBalanceWarning';
 import { TransactionStatus } from '../molecules/TransactionStatus';
 import { LargeAmountModal } from './LargeAmountModal';
+import { BorrowingExplainerPanel } from './BorrowingExplainerPanel';
 import { useGasEstimation } from '@/hooks/useGasEstimation';
 import { useBalanceMonitor } from '@/hooks/useBalanceMonitor';
 import { useMUSDTransfer } from '@/hooks/useMUSDTransfer';
+import { useBTCBalance } from '@/hooks/useBTCBalance';
 import { parseContractError } from '@/lib/error-parser';
 import { MUSD_ADDRESS } from '@/config/contracts';
 
@@ -76,6 +79,10 @@ export function PaymentForm({
   const [showLargeAmountModal, setShowLargeAmountModal] =
     useState<boolean>(false);
 
+  // Borrowing explainer panel state
+  const [showBorrowingExplainer, setShowBorrowingExplainer] =
+    useState<boolean>(false);
+
   // Failure counter state (AC7: Track repeated failures)
   const [failureCount, setFailureCount] = useState<number>(() => {
     // Load from sessionStorage on mount
@@ -103,6 +110,14 @@ export function PaymentForm({
     address: walletAddress,
     musdAddress: MUSD_ADDRESS!,
   });
+
+  // BTC balance monitoring hook
+  const { btcBalance } = useBTCBalance({
+    address: walletAddress,
+  });
+
+  // Note: BTC price is now fetched internally by BorrowingExplainerPanel (Story 2.3)
+  // No need for mock price or minimum BTC calculation here anymore
 
   // Convert amount string to bigint for gas estimation
   const amountBigInt =
@@ -139,6 +154,23 @@ export function PaymentForm({
   // Handle quick amount chip selection
   const handleQuickAmountSelect = useCallback((selectedAmount: number) => {
     setAmount(selectedAmount.toFixed(2));
+  }, []);
+
+  // Handle BTC borrow flow - opens explainer panel
+  const handleBtcBorrowFlow = useCallback(() => {
+    setShowBorrowingExplainer(true);
+  }, []);
+
+  // Handle continue from explainer (placeholder for Stories 2.3-2.4)
+  const handleContinueToBorrowing = useCallback(() => {
+    setShowBorrowingExplainer(false);
+    console.log('Continue to borrowing flow - Stories 2.3-2.4 will implement');
+  }, []);
+
+  // Handle reduce tip callback from BorrowingExplainerPanel
+  const handleReduceTip = useCallback((newAmount: bigint) => {
+    setAmount(formatEther(newAmount));
+    setShowBorrowingExplainer(false);
   }, []);
 
   // Calculate total cost and check insufficient balance
@@ -372,14 +404,24 @@ export function PaymentForm({
         </div>
       )}
 
-      {/* Send button */}
-      <SendButton
-        amount={amount}
-        disabled={!isValidAmount || hasInsufficientBalance}
-        isLoading={isPending || isConfirming}
-        onClick={handleSendClick}
-        insufficientBalance={hasInsufficientBalance}
-      />
+      {/* Payment buttons */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:gap-3">
+        {/* Primary: Send with MUSD */}
+        <SendButton
+          amount={amount}
+          disabled={!isValidAmount || hasInsufficientBalance}
+          isLoading={isPending || isConfirming}
+          onClick={handleSendClick}
+          insufficientBalance={hasInsufficientBalance}
+        />
+
+        {/* Secondary: Tip with BTC (only if user has BTC) */}
+        <TipWithBtcButton
+          btcBalance={btcBalance}
+          isDisabled={false}
+          onClick={handleBtcBorrowFlow}
+        />
+      </div>
 
       {/* Large amount confirmation modal */}
       <LargeAmountModal
@@ -387,6 +429,15 @@ export function PaymentForm({
         amount={amount}
         onConfirm={handleLargeAmountConfirm}
         onCancel={handleLargeAmountCancel}
+      />
+
+      {/* BTC borrowing explainer panel */}
+      <BorrowingExplainerPanel
+        isOpen={showBorrowingExplainer}
+        onClose={() => setShowBorrowingExplainer(false)}
+        onContinue={handleContinueToBorrowing}
+        tipAmount={amount}
+        onReduceTip={handleReduceTip}
       />
     </div>
   );

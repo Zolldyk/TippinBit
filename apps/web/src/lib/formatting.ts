@@ -87,3 +87,27 @@ export function calculateMaxSendable(
   const maxSendable = balance - gasEstimate;
   return maxSendable > BigInt(0) ? maxSendable : BigInt(0);
 }
+
+/**
+ * Formats a timestamp as a human-readable time ago string
+ *
+ * Converts a millisecond timestamp to a relative time string
+ * (e.g., "2 minutes ago", "1 hour ago").
+ *
+ * @param timestamp - Unix timestamp in milliseconds
+ * @returns Human-readable time ago string
+ *
+ * @example
+ * formatTimeAgo(Date.now() - 120000) // "2 minutes ago"
+ * formatTimeAgo(Date.now() - 900000) // "15 minutes ago"
+ * formatTimeAgo(Date.now() - 3600000) // "1 hour ago"
+ */
+export function formatTimeAgo(timestamp: number): string {
+  const minutes = Math.floor((Date.now() - timestamp) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes === 1) return '1 minute ago';
+  if (minutes < 60) return `${minutes} minutes ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours === 1) return '1 hour ago';
+  return `${hours} hours ago`;
+}

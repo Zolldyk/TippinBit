@@ -15,6 +15,7 @@ import { Button } from '../atoms/Button';
 import { AddressDisplay } from '../molecules/AddressDisplay';
 import { WalletInstallModal } from '../molecules/WalletInstallModal';
 import { NetworkSwitchModal } from '../molecules/NetworkSwitchModal';
+import { useBTCBalance } from '@/hooks/useBTCBalance';
 import { MUSD_ADDRESS, ERC20_ABI } from '@/config/contracts';
 import { mezoTestnet } from '@/config/chains';
 
@@ -48,6 +49,9 @@ export function WalletConnector({
       refetchInterval: 10000, // Refetch every 10 seconds
     },
   });
+
+  // Read BTC balance
+  const { btcBalanceFormatted } = useBTCBalance({ address });
 
   // Check network on connection
   useEffect(() => {
@@ -194,7 +198,10 @@ export function WalletConnector({
     <div className="flex items-center gap-3">
       <div className="flex flex-col items-end gap-1">
         <AddressDisplay address={address!} />
-        <span className="text-xs text-neutral-400">{formattedBalance}</span>
+        <div className="flex flex-col gap-0.5 text-xs text-neutral-400">
+          <span>BTC: {btcBalanceFormatted || '0.000000'}</span>
+          <span>MUSD: {formattedBalance}</span>
+        </div>
       </div>
       <button
         onClick={handleDisconnect}
