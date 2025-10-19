@@ -66,3 +66,55 @@ export interface BorrowingTxHashes {
   deposit?: TxHash;
   execute?: TxHash;
 }
+
+/**
+ * Ethereum address type (branded type for type safety)
+ */
+export type Address = `0x${string}`;
+
+/**
+ * Username record stored in Redis
+ *
+ * Represents a claimed username with its associated wallet address,
+ * signature proof, and timestamp.
+ */
+export interface UsernameRecord {
+  walletAddress: Address;
+  message: string; // The message that was signed
+  signature: string; // EIP-191 signature
+  claimedAt: string; // ISO 8601 timestamp
+}
+
+/**
+ * Username claim request payload
+ *
+ * Request body for POST /.netlify/functions/username-claim
+ */
+export interface UsernameClaimRequest {
+  username: string;
+  walletAddress: Address;
+  message: string;
+  signature: string;
+}
+
+/**
+ * Username claim response
+ *
+ * Response from POST /.netlify/functions/username-claim on success
+ */
+export interface UsernameClaimResponse {
+  success: true;
+  username: string;
+  walletAddress: Address;
+}
+
+/**
+ * Username lookup response
+ *
+ * Response from GET /.netlify/functions/username-lookup on success
+ */
+export interface UsernameLookupResponse {
+  username: string;
+  walletAddress: Address;
+  claimedAt: string;
+}
