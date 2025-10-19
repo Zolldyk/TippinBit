@@ -81,7 +81,11 @@ export function UsernameClaimSuccess({
             className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent"
             aria-label="Payment link"
           />
-          <CopyButton textToCopy={fullPaymentLink} />
+          <CopyButton
+            textToCopy={fullPaymentLink}
+            displayText="Copy"
+            ariaLabel="Copy payment link"
+          />
         </div>
       </div>
 

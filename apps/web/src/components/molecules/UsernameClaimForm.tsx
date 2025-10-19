@@ -123,7 +123,7 @@ export function UsernameClaimForm() {
                   ? 'success'
                   : 'default'
             }
-            errorMessage={validationError || undefined}
+            {...(validationError ? { errorMessage: validationError } : {})}
             aria-describedby="availability-status"
             aria-invalid={validationError ? 'true' : 'false'}
             disabled={isPending}

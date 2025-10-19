@@ -1,6 +1,9 @@
 import { Metadata } from 'next';
 import { UsernamePayPageClient } from './UsernamePayPageClient';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ username: string }>;
   searchParams: Promise<{ amount?: string }>;
@@ -36,5 +39,10 @@ export default async function UsernamePayPage({
   const { username } = await params;
   const { amount } = await searchParams;
 
-  return <UsernamePayPageClient username={username} amount={amount} />;
+  return (
+    <UsernamePayPageClient
+      username={username}
+      {...(amount ? { amount } : {})}
+    />
+  );
 }
