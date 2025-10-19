@@ -36,8 +36,8 @@ function getErrorMessage(error: Error | BorrowingError, step: number): string {
 
   // Fallback: Try to parse as contract error
   const parsed = parseContractError(error);
-  if (parsed !== error.message) {
-    return `Step ${step} failed: ${parsed}`;
+  if (parsed.userMessage && parsed.userMessage !== error.message) {
+    return `Step ${step} failed: ${parsed.userMessage}`;
   }
 
   // Generic error
