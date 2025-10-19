@@ -52,3 +52,9 @@ lerna-debug.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Documentation - ignore all .md files except README.md
+*.md
+!README.md
+!readme.md
+!Readme.md

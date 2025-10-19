@@ -27,11 +27,14 @@ import { InsufficientBalanceWarning } from '../molecules/InsufficientBalanceWarn
 import { TransactionStatus } from '../molecules/TransactionStatus';
 import { LargeAmountModal } from './LargeAmountModal';
 import { BorrowingExplainerPanel } from './BorrowingExplainerPanel';
+import { BorrowingFlowModal } from './BorrowingFlowModal';
 import { useGasEstimation } from '@/hooks/useGasEstimation';
 import { useBalanceMonitor } from '@/hooks/useBalanceMonitor';
 import { useMUSDTransfer } from '@/hooks/useMUSDTransfer';
 import { useBTCBalance } from '@/hooks/useBTCBalance';
+import { useBTCPrice } from '@/hooks/useBTCPrice';
 import { parseContractError } from '@/lib/error-parser';
+import { calculateCollateralRequired } from '@/lib/btc-calculations';
 import { MUSD_ADDRESS } from '@/config/contracts';
 
 const LARGE_AMOUNT_THRESHOLD = 100; // $100
@@ -83,6 +86,10 @@ export function PaymentForm({
   const [showBorrowingExplainer, setShowBorrowingExplainer] =
     useState<boolean>(false);
 
+  // Borrowing flow modal state
+  const [showBorrowingFlowModal, setShowBorrowingFlowModal] =
+    useState<boolean>(false);
+
   // Failure counter state (AC7: Track repeated failures)
   const [failureCount, setFailureCount] = useState<number>(() => {
     // Load from sessionStorage on mount
@@ -116,8 +123,8 @@ export function PaymentForm({
     address: walletAddress,
   });
 
-  // Note: BTC price is now fetched internally by BorrowingExplainerPanel (Story 2.3)
-  // No need for mock price or minimum BTC calculation here anymore
+  // BTC price hook (for borrowing flow modal)
+  const { btcPrice } = useBTCPrice();
 
   // Convert amount string to bigint for gas estimation
   const amountBigInt =
@@ -161,10 +168,10 @@ export function PaymentForm({
     setShowBorrowingExplainer(true);
   }, []);
 
-  // Handle continue from explainer (placeholder for Stories 2.3-2.4)
+  // Handle continue from explainer - opens borrowing flow modal (Story 2.4)
   const handleContinueToBorrowing = useCallback(() => {
     setShowBorrowingExplainer(false);
-    console.log('Continue to borrowing flow - Stories 2.3-2.4 will implement');
+    setShowBorrowingFlowModal(true);
   }, []);
 
   // Handle reduce tip callback from BorrowingExplainerPanel
@@ -172,6 +179,24 @@ export function PaymentForm({
     setAmount(formatEther(newAmount));
     setShowBorrowingExplainer(false);
   }, []);
+
+  // Handle borrowing flow completion - redirect to confirmation page
+  const handleBorrowingComplete = useCallback((txHash: string) => {
+    // Reset failure counter on successful transaction
+    setFailureCount(0);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('tx_failure_count', '0');
+    }
+
+    // Wait 1 second to show success status, then redirect
+    setTimeout(() => {
+      // Format amount to 2 decimal places for URL
+      const formattedAmount = parseFloat(amount).toFixed(2);
+      // Build confirmation URL with amount, recipient, and type
+      const confirmationUrl = `/confirmation?tx=${txHash}&amount=${formattedAmount}&recipient=${encodeURIComponent(recipientAddress)}&type=borrow`;
+      router.push(confirmationUrl);
+    }, 1000);
+  }, [amount, recipientAddress, router]);
 
   // Calculate total cost and check insufficient balance
   const totalCost = useMemo(() => {
@@ -439,6 +464,19 @@ export function PaymentForm({
         tipAmount={amount}
         onReduceTip={handleReduceTip}
       />
+
+      {/* BTC borrowing flow modal (Story 2.4) */}
+      {btcPrice && (
+        <BorrowingFlowModal
+          isOpen={showBorrowingFlowModal}
+          onClose={() => setShowBorrowingFlowModal(false)}
+          tipAmount={amountBigInt}
+          recipient={recipientAddress}
+          btcPrice={btcPrice}
+          collateralRequired={calculateCollateralRequired(amountBigInt, btcPrice)}
+          onComplete={handleBorrowingComplete}
+        />
+      )}
     </div>
   );
 }
