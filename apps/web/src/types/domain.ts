@@ -73,6 +73,11 @@ export interface BorrowingTxHashes {
 export type Address = `0x${string}`;
 
 /**
+ * Username type (branded type for type safety)
+ */
+export type Username = `@${string}`;
+
+/**
  * Username record stored in Redis
  *
  * Represents a claimed username with its associated wallet address,
@@ -117,4 +122,96 @@ export interface UsernameLookupResponse {
   username: string;
   walletAddress: Address;
   claimedAt: string;
+}
+
+/**
+ * Username availability states
+ *
+ * Tracks the state of username availability checking:
+ * - idle: No check in progress, input is too short
+ * - checking: API call in progress (debouncing or fetching)
+ * - available: Username is available to claim
+ * - taken: Username is already claimed
+ * - unknown: Error occurred during check
+ */
+export type UsernameAvailability =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'taken'
+  | 'unknown';
+
+/**
+ * Username claim error response
+ *
+ * Error response from POST /.netlify/functions/username-claim
+ */
+export interface UsernameClaimError {
+  error: string;
+  code:
+    | 'USERNAME_TAKEN'
+    | 'INVALID_SIGNATURE'
+    | 'VALIDATION_ERROR'
+    | 'NETWORK_ERROR';
+}
+
+/**
+ * Link generator tab selection type
+ *
+ * Determines which tab is active in the LinkGeneratorContainer
+ */
+export type LinkGeneratorTab = 'address' | 'username';
+
+/**
+ * Username resolution states
+ *
+ * Tracks the state of username-to-address resolution:
+ * - idle: No resolution in progress
+ * - loading: API call in progress to fetch wallet address
+ * - success: Username successfully resolved to address
+ * - not_found: Username not found (404)
+ * - error: Network or API error during resolution
+ */
+export type UsernameResolutionState =
+  | 'idle'
+  | 'loading'
+  | 'success'
+  | 'not_found'
+  | 'error';
+
+/**
+ * Username resolution result
+ *
+ * Result from useUsernameResolution hook containing the resolution state,
+ * resolved address, and any error information.
+ */
+export interface UsernameResolutionResult {
+  status: UsernameResolutionState;
+  username?: Username;
+  address?: Address;
+  claimedAt?: string; // ISO 8601 timestamp
+  error?: string;
+}
+
+/**
+ * Recipient display props
+ *
+ * Props for displaying recipient information with optional username support.
+ * When username is provided, it's shown as primary identifier with address as secondary.
+ */
+export interface RecipientDisplayProps {
+  recipientAddress: Address;
+  username?: Username; // Optional username to display
+}
+
+/**
+ * Session storage cached resolution
+ *
+ * Cached username-to-address mapping stored in session storage.
+ * Includes timestamp for TTL expiration (5 minutes).
+ */
+export interface CachedUsernameResolution {
+  username: string;
+  address: Address;
+  timestamp: number;
 }

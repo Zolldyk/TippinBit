@@ -1,9 +1,11 @@
 import { Share2, Camera, Music, Copy } from 'lucide-react';
 import { useState } from 'react';
 import type { Address } from 'viem';
+import type { Username } from '@/types/domain';
 
 export interface SocialShareButtonProps {
   recipient?: Address | null;
+  username?: Username | null;
   txHash: string;
 }
 
@@ -15,13 +17,19 @@ export interface SocialShareButtonProps {
  * - Instagram: Copy link for manual sharing (no web intent available)
  * - TikTok: Copy link for manual sharing (no web intent available)
  * - Handles missing recipient gracefully
+ * - Uses username in share text if provided (more readable than address)
  * - Toast notification on copy
  * - Accessible with proper ARIA labels
  *
  * @param recipient - Optional recipient Ethereum address
+ * @param username - Optional username to display in share text
  * @param txHash - Transaction hash for the tip
  */
-export function SocialShareButton({ recipient, txHash }: SocialShareButtonProps) {
+export function SocialShareButton({
+  recipient,
+  username,
+  txHash,
+}: SocialShareButtonProps) {
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [copiedPlatform, setCopiedPlatform] = useState<string>('');
 
@@ -35,9 +43,12 @@ export function SocialShareButton({ recipient, txHash }: SocialShareButtonProps)
 
   // Generate Twitter/X share URL
   const generateTwitterUrl = (): string => {
-    const baseText = recipient
-      ? `I just supported ${truncateAddress(recipient)} with @TippinBit! Zero fees, instant transfers. 🚀`
-      : 'I just sent a tip with @TippinBit! Zero fees, instant transfers. 🚀';
+    // Prefer username over address for readability
+    const baseText = username
+      ? `I just tipped ${username} on @TippinBit! 🚀`
+      : recipient
+        ? `I just supported ${truncateAddress(recipient)} with @TippinBit! Zero fees, instant transfers. 🚀`
+        : 'I just sent a tip with @TippinBit! Zero fees, instant transfers. 🚀';
 
     return `https://twitter.com/intent/tweet?${new URLSearchParams({
       text: baseText,

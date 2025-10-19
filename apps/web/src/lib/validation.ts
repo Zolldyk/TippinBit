@@ -52,3 +52,89 @@ export function parsePaymentAmount(amountStr?: string): number | undefined {
 
   return parsed;
 }
+
+/**
+ * Validates a username according to TippinBit rules.
+ *
+ * Rules:
+ * - Length: 3-20 characters
+ * - Characters: alphanumeric + underscore + hyphen only
+ * - Regex: /^[a-zA-Z0-9_-]+$/
+ *
+ * @param username - The username string to validate (with or without @ prefix)
+ * @returns Error message string if invalid, or null if valid
+ *
+ * @example
+ * ```typescript
+ * validateUsername('alice');        // Returns: null (valid)
+ * validateUsername('@alice');       // Returns: null (valid)
+ * validateUsername('ab');           // Returns: 'Username must be at least 3 characters'
+ * validateUsername('alice@bob');    // Returns: 'Username can only contain letters...'
+ * ```
+ */
+export function validateUsername(username: string): string | null {
+  // Remove @ prefix if present
+  const cleanUsername = username.replace(/^@/, '');
+
+  if (cleanUsername.length < 3) {
+    return 'Username must be at least 3 characters';
+  }
+
+  if (cleanUsername.length > 20) {
+    return 'Username must be at most 20 characters';
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(cleanUsername)) {
+    return 'Username can only contain letters, numbers, underscores, and hyphens';
+  }
+
+  return null; // Valid
+}
+
+/**
+ * Normalizes a username to standard format.
+ *
+ * - Always prepends @ if missing
+ * - Converts to lowercase
+ *
+ * @param username - The username string to normalize
+ * @returns Normalized username with @ prefix in lowercase
+ *
+ * @example
+ * ```typescript
+ * normalizeUsername('alice');     // Returns: '@alice'
+ * normalizeUsername('@Alice');    // Returns: '@alice'
+ * normalizeUsername('ALICE');     // Returns: '@alice'
+ * ```
+ */
+export function normalizeUsername(username: string): string {
+  // Always prepend @ if missing
+  const withAt = username.startsWith('@') ? username : `@${username}`;
+  return withAt.toLowerCase();
+}
+
+/**
+ * Generates username suggestions for taken usernames.
+ *
+ * Creates 3 alternative suggestions:
+ * 1. Append number: @alice → @alice2
+ * 2. Append "_creator": @alice → @alice_creator
+ * 3. Append descriptor: @alice → @alicewrites
+ *
+ * @param baseUsername - The taken username (with or without @ prefix)
+ * @returns Array of 3 suggested alternative usernames
+ *
+ * @example
+ * ```typescript
+ * generateUsernameSuggestions('alice');
+ * // Returns: ['@alice2', '@alice_creator', '@alicewrites']
+ *
+ * generateUsernameSuggestions('@alice');
+ * // Returns: ['@alice2', '@alice_creator', '@alicewrites']
+ * ```
+ */
+export function generateUsernameSuggestions(baseUsername: string): string[] {
+  const clean = baseUsername.replace(/^@/, '');
+
+  return [`@${clean}2`, `@${clean}_creator`, `@${clean}writes`];
+}

@@ -29,6 +29,12 @@ export function Header() {
             >
               Home
             </Link>
+            <Link
+              href="/create"
+              className="text-sm font-medium text-neutral-700 hover:text-coral transition-colors"
+            >
+              Create Link
+            </Link>
 
             {/* Connect Wallet Button */}
             <ConnectButton

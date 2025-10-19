@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import type { Address } from 'viem';
+import type { Username } from '@/types/domain';
 import { SocialShareButton } from '@/components/molecules/SocialShareButton';
 import { ReturnButton } from '@/components/molecules/ReturnButton';
 import { CopyButton } from '@/components/molecules/CopyButton';
@@ -12,17 +13,21 @@ export interface TransactionConfirmationContentProps {
   txHash: string;
   amount?: string | null;
   recipient?: Address | null;
+  username?: Username | null;
   timestamp: string;
 }
 
 /**
  * Client Component wrapper for transaction confirmation content
  * Handles fade-in animation and client-side interactivity
+ *
+ * When username is provided, it's used in social sharing for better readability.
  */
 export function TransactionConfirmationContent({
   txHash,
   amount,
   recipient,
+  username,
   timestamp,
 }: TransactionConfirmationContentProps) {
   const [isVisible, setIsVisible] = useState(false);
@@ -114,6 +119,7 @@ export function TransactionConfirmationContent({
       <div className="mb-6 flex justify-center">
         <SocialShareButton
           {...(recipient !== undefined && { recipient })}
+          {...(username !== undefined && { username })}
           txHash={txHash}
         />
       </div>

@@ -29,6 +29,7 @@ function ConfirmationPageContent() {
   const txHash = searchParams.get('tx');
   const amountParam = searchParams.get('amount');
   const recipientParam = searchParams.get('recipient');
+  const usernameParam = searchParams.get('username');
 
   // Validate transaction hash
   const isValidHash = txHash && validateTxHash(txHash);
@@ -45,6 +46,12 @@ function ConfirmationPageContent() {
   const validatedRecipient =
     recipientParam && isAddress(recipientParam)
       ? (recipientParam as Address)
+      : null;
+
+  // Validate username (if provided)
+  const validatedUsername =
+    usernameParam && usernameParam.startsWith('@')
+      ? (usernameParam as `@${string}`)
       : null;
 
   // Format timestamp (client-side)
@@ -99,6 +106,7 @@ function ConfirmationPageContent() {
         txHash={txHash}
         amount={validatedAmount}
         recipient={validatedRecipient}
+        username={validatedUsername}
         timestamp={timestamp}
       />
     </main>
