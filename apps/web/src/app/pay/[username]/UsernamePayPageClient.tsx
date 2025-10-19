@@ -81,7 +81,7 @@ export function UsernamePayPageClient({
           {/* RecipientCard with username */}
           <RecipientCard
             recipientAddress={resolution.address}
-            username={resolution.username}
+            username={formattedUsername}
           />
 
           <Card variant="elevated" className="p-6">
