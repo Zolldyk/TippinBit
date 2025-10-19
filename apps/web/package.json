@@ -11,7 +11,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:utils": "vitest run ../../netlify/functions/utils --config=../../netlify/functions/vitest.config.ts",
+    "test:utils": "vitest run ../../netlify/functions/utils --config=../../netlify/vitest.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug"
