@@ -259,6 +259,84 @@ Set the following environment variables in the Netlify dashboard:
 
 **Note:** Only variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 
+## Accessibility
+
+TippinBit is built with WCAG 2.1 AA compliance to ensure the platform is accessible to all users.
+
+### Accessibility Features
+
+- **Keyboard Navigation:** All interactive elements are fully keyboard accessible (Tab, Enter, Space)
+- **Focus Indicators:** High-contrast 2px teal outline on all focused elements
+- **Screen Reader Support:** Semantic HTML, ARIA labels, and live regions for dynamic content
+- **Color Contrast:** All text meets 4.5:1 ratio, UI components meet 3:1 ratio
+- **Touch Targets:** All interactive elements are ≥44x44px for mobile accessibility
+- **Reduced Motion:** Respects `prefers-reduced-motion` system setting
+
+### Keyboard Shortcuts
+
+- **Tab** - Navigate forward through interactive elements
+- **Shift + Tab** - Navigate backward through interactive elements
+- **Enter/Space** - Activate buttons and links
+- **Escape** - Close modals and dialogs
+
+### Screen Reader Compatibility
+
+TippinBit has been tested with:
+- **VoiceOver** (macOS/iOS) - Full support
+- **NVDA** (Windows) - Compatible
+- **JAWS** (Windows) - Compatible
+
+### Testing Accessibility
+
+Run accessibility tests:
+
+```bash
+# Unit tests with axe-core
+pnpm test apps/web/src/components/organisms/PaymentForm.a11y.test.tsx
+
+# E2E accessibility tests
+pnpm test:e2e apps/web/e2e/accessibility.spec.ts
+```
+
+## Performance
+
+TippinBit is optimized for fast load times and smooth interactions, even on slow connections.
+
+### Performance Targets
+
+- **Initial Load:** <2 seconds on 4G connection
+- **Bundle Size:** ≤150KB gzipped JavaScript (initial load)
+- **Lighthouse Score:** Performance ≥90, Accessibility ≥95
+
+### Core Web Vitals
+
+- **Largest Contentful Paint (LCP):** <2.5s
+- **First Input Delay (FID):** <100ms
+- **Cumulative Layout Shift (CLS):** <0.1
+
+### Performance Monitoring
+
+Web Vitals are automatically tracked in development (console logs) and can be sent to analytics in production.
+
+### Lighthouse CI
+
+Every pull request is automatically tested with Lighthouse CI to ensure performance and accessibility standards are maintained.
+
+View Lighthouse reports in GitHub Actions after each PR build.
+
+### Running Performance Tests Locally
+
+```bash
+# Build the app
+pnpm build
+
+# Run Lighthouse
+npx lighthouse http://localhost:3000 --budget-path=lighthouse-budget.json --view
+
+# Serve built files locally
+npx serve apps/web/out
+```
+
 ## Documentation
 
 - **[Architecture](docs/architecture/index.md)** - System architecture and technical design

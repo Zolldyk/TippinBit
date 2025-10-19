@@ -1,19 +1,11 @@
-import { Suspense } from 'react';
+'use client';
+
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { isAddress } from 'viem';
 import type { Address } from 'viem';
 import { validateTxHash } from '@/lib/error-parser';
 import { TransactionConfirmationContent } from '@/components/organisms/TransactionConfirmationContent';
-
-export const dynamic = 'force-dynamic';
-
-interface ConfirmationPageProps {
-  searchParams: {
-    tx?: string;
-    amount?: string;
-    recipient?: string;
-    ref?: string;
-  };
-}
 
 /**
  * TransactionConfirmationPage displays success message after a tip is sent.
@@ -26,23 +18,23 @@ interface ConfirmationPageProps {
  * - Shareable via direct URL
  * - Social sharing
  * - Return to creator button (when referrer detected)
- * - Works without JavaScript (static content renders)
  *
  * URL: /confirmation?tx=0x...&amount=5.00&recipient=0x...&ref=https://...
  */
-export default async function TransactionConfirmationPage({
-  searchParams,
-}: ConfirmationPageProps) {
+function ConfirmationPageContent() {
+  const searchParams = useSearchParams();
+  const [timestamp, setTimestamp] = useState<string>('');
+
   // Extract URL parameters
-  const txHash = searchParams.tx;
-  const amountParam = searchParams.amount;
-  const recipientParam = searchParams.recipient;
+  const txHash = searchParams.get('tx');
+  const amountParam = searchParams.get('amount');
+  const recipientParam = searchParams.get('recipient');
 
   // Validate transaction hash
   const isValidHash = txHash && validateTxHash(txHash);
 
   // Validate and format amount (must be numeric with 2 decimals, e.g., "5.00")
-  const validateAmount = (amount: string | undefined): string | null => {
+  const validateAmount = (amount: string | null): string | null => {
     if (!amount) return null;
     const amountRegex = /^\d+\.\d{2}$/;
     return amountRegex.test(amount) ? amount : null;
@@ -55,17 +47,21 @@ export default async function TransactionConfirmationPage({
       ? (recipientParam as Address)
       : null;
 
-  // Format timestamp (server-side)
-  const timestamp = new Date().toLocaleString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  // Format timestamp (client-side)
+  useEffect(() => {
+    setTimestamp(
+      new Date().toLocaleString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      })
+    );
+  }, []);
 
-  // Invalid transaction hash - show error page (server-rendered)
+  // Invalid transaction hash - show error page
   if (!isValidHash) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
@@ -99,18 +95,20 @@ export default async function TransactionConfirmationPage({
   // Valid transaction - render confirmation page
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
-      <Suspense
-        fallback={
-          <div className="text-sm text-slate-600">Loading...</div>
-        }
-      >
-        <TransactionConfirmationContent
-          txHash={txHash}
-          amount={validatedAmount}
-          recipient={validatedRecipient}
-          timestamp={timestamp}
-        />
-      </Suspense>
+      <TransactionConfirmationContent
+        txHash={txHash}
+        amount={validatedAmount}
+        recipient={validatedRecipient}
+        timestamp={timestamp}
+      />
     </main>
+  );
+}
+
+export default function TransactionConfirmationPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-slate-600">Loading...</div>}>
+      <ConfirmationPageContent />
+    </Suspense>
   );
 }

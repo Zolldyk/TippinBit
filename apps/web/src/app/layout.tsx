@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/components/providers/Web3Provider";
 import { Web3ErrorBoundary } from "@/components/providers/Web3ErrorBoundary";
+import { WebVitalsInit } from "@/components/providers/WebVitalsInit";
 import { Header } from "@/components/organisms/Header";
 
 const inter = Inter({
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        <WebVitalsInit />
         <Web3ErrorBoundary>
           <Web3Provider>
             <Header />

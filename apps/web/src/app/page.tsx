@@ -1,9 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/atoms/Button';
-import { PaymentLinkGenerator } from '@/components/organisms/PaymentLinkGenerator';
 import { ArrowRight, Zap, Shield, Coins } from 'lucide-react';
+
+const PaymentLinkGenerator = dynamic(
+  () => import('@/components/organisms/PaymentLinkGenerator').then(mod => ({ default: mod.PaymentLinkGenerator })),
+  { loading: () => <div className="text-neutral-600">Loading...</div> }
+);
 
 export default function Home() {
   const [showLinkGenerator, setShowLinkGenerator] = useState(false);
