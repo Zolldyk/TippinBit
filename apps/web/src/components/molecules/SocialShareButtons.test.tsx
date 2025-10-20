@@ -112,8 +112,8 @@ describe('SocialShareButtons', () => {
       const originalLocation = window.location;
 
       // Mock window.location
-      delete (window as any).location;
-      window.location = { ...originalLocation, href: '' } as any;
+      delete (window as unknown as { location: unknown }).location;
+      window.location = { ...originalLocation, href: '' } as Location;
 
       render(<SocialShareButtons paymentUrl={mockPaymentUrl} />);
 
@@ -132,8 +132,8 @@ describe('SocialShareButtons', () => {
       const user = userEvent.setup();
       const originalLocation = window.location;
 
-      delete (window as any).location;
-      window.location = { ...originalLocation, href: '' } as any;
+      delete (window as unknown as { location: unknown }).location;
+      window.location = { ...originalLocation, href: '' } as Location;
 
       render(<SocialShareButtons paymentUrl={mockPaymentUrl} />);
 
