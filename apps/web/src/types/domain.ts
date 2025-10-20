@@ -215,3 +215,63 @@ export interface CachedUsernameResolution {
   address: Address;
   timestamp: number;
 }
+
+/**
+ * QR code error correction levels
+ * L = Low (7% recovery)
+ * M = Medium (15% recovery)
+ * Q = Quartile (25% recovery)
+ * H = High (30% recovery) - REQUIRED for logo overlay
+ */
+export type QRCodeErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
+
+/**
+ * QR code generation options
+ */
+export interface QRCodeOptions {
+  errorCorrectionLevel: QRCodeErrorCorrectionLevel;
+  width: number;
+  margin: number;
+  color?: {
+    dark: string; // Module color (default: black)
+    light: string; // Background color (default: white)
+  };
+}
+
+/**
+ * QR code display component props
+ */
+export interface QRCodeDisplayProps {
+  /** Full payment URL to encode in QR code */
+  paymentUrl: string;
+  /** QR code size in pixels (default: 300) */
+  size?: number;
+  /** Show TippinBit logo overlay (default: true) */
+  showLogo?: boolean;
+  /** Callback when QR code is generated */
+  onGenerated?: (dataUrl: string) => void;
+}
+
+/**
+ * QR code download button props
+ */
+export interface QRCodeDownloadButtonProps {
+  /** QR code as data URL (from QRCodeDisplay) */
+  qrCodeDataUrl: string;
+  /** Download filename (without .png extension) */
+  filename: string;
+  /** Button styling variant */
+  variant?: 'primary' | 'secondary';
+}
+
+/**
+ * Payment URL builder params
+ */
+export interface PaymentUrlParams {
+  /** Username (with or without @ prefix) */
+  username?: string;
+  /** Wallet address */
+  address?: Address;
+  /** Optional tip amount in USD */
+  amount?: string;
+}

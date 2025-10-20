@@ -1,0 +1,7 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Coral background circle -->
+  <circle cx="30" cy="30" r="30" fill="#FF6B6B"/>
+
+  <!-- White "TB" text for TippinBit -->
+  <text x="30" y="38" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">TB</text>
+</svg>

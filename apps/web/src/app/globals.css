@@ -106,3 +106,61 @@ select:focus-visible,
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Print-friendly styles for QR codes (AC9) */
+@media print {
+  /* Hide navigation and non-essential elements */
+  nav,
+  header,
+  footer,
+  button:not(.qr-code-container button),
+  .no-print {
+    display: none !important;
+  }
+
+  /* QR code container full width for printing */
+  .qr-code-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    margin: 0 auto;
+  }
+
+  /* QR code image sizing for print */
+  .qr-code-container img {
+    width: 80% !important;
+    height: auto !important;
+    max-width: 500px !important;
+    margin: 0 auto;
+    display: block !important;
+  }
+
+  /* High contrast black/white for QR code */
+  .qr-code-container {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Show payment URL text in print */
+  .payment-url-text {
+    display: block !important;
+    font-size: 14pt !important;
+    text-align: center !important;
+    margin-top: 20px !important;
+    word-break: break-all;
+    color: black !important;
+  }
+
+  /* Page settings */
+  @page {
+    margin: 1cm;
+  }
+
+  /* Ensure QR code starts on new page if needed */
+  .qr-code-container {
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+}

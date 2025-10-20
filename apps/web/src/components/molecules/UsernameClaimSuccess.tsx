@@ -1,8 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { CopyButton } from './CopyButton';
 import { Button } from '../atoms/Button';
+import { QRCodeDisplay } from './QRCodeDisplay';
+import { QRCodeDownloadButton } from '../atoms/QRCodeDownloadButton';
+import { buildPaymentUrl, generateQRFilename } from '@/lib/payment-url';
 
 export interface UsernameClaimSuccessProps {
   /**
@@ -40,12 +44,27 @@ export function UsernameClaimSuccess({
   username,
   onCreateAnother,
 }: UsernameClaimSuccessProps) {
+  const [selectedAmount, setSelectedAmount] = useState<string>('');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+
+  // Build payment URL with optional amount
+  const paymentUrl = buildPaymentUrl({
+    username,
+    ...(selectedAmount && { amount: selectedAmount }),
+  });
+
+  // Generate QR filename
+  const qrFilename = generateQRFilename(username);
+
+  // Amount presets (AC11)
+  const amountPresets = ['3', '5', '10', '25'];
+
   const paymentLink = `tippinbit.com/pay/${username}`;
   const fullPaymentLink = `https://${paymentLink}`;
 
   return (
     <div
-      className="bg-white border-2 border-green-200 rounded-lg p-6 space-y-4 animate-fadeIn"
+      className="bg-white border-2 border-green-200 rounded-lg p-6 space-y-6 animate-fadeIn"
       role="status"
       aria-live="polite"
     >
@@ -86,6 +105,72 @@ export function UsernameClaimSuccess({
             displayText="Copy"
             ariaLabel="Copy payment link"
           />
+        </div>
+      </div>
+
+      {/* QR Code Section (AC2, AC3, AC11) */}
+      <div className="space-y-4">
+        <h4 className="text-md font-semibold text-gray-900">
+          QR Code for In-Person Tipping
+        </h4>
+
+        {/* Amount Selector (AC11) */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Optional: Pre-fill amount
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {amountPresets.map((amount) => (
+              <button
+                key={amount}
+                onClick={() => setSelectedAmount(amount)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
+                  selectedAmount === amount
+                    ? 'bg-coral text-white border-coral'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-coral hover:text-coral'
+                }`}
+                aria-label={`Set amount to $${amount}`}
+              >
+                ${amount}
+              </button>
+            ))}
+            <button
+              onClick={() => setSelectedAmount('')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
+                selectedAmount === ''
+                  ? 'bg-coral text-white border-coral'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-coral hover:text-coral'
+              }`}
+              aria-label="No preset amount"
+            >
+              No amount
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Supporters can scan and confirm without typing an amount
+          </p>
+        </div>
+
+        {/* QR Code Display (AC2: auto-updates) */}
+        <div className="flex flex-col items-center gap-4 bg-gray-50 rounded-lg p-6">
+          <QRCodeDisplay
+            paymentUrl={paymentUrl}
+            size={300}
+            showLogo={true}
+            onGenerated={setQrCodeDataUrl}
+          />
+
+          {/* Download Button (AC5) */}
+          <QRCodeDownloadButton
+            qrCodeDataUrl={qrCodeDataUrl}
+            filename={qrFilename}
+            variant="primary"
+          />
+
+          {/* Payment URL Display (for print) */}
+          <p className="text-xs text-gray-600 font-mono break-all text-center payment-url-text">
+            {paymentUrl}
+          </p>
         </div>
       </div>
 
