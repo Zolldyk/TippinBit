@@ -1,5 +1,11 @@
 import { defineChain } from 'viem';
 
+// Primary and fallback RPC URLs for Mezo Testnet
+const MEZO_RPC_URLS = [
+  'https://spectrum-02.simplystaking.xyz/c3VpbHRuYXUtMDItYzE0YmNlZTM/sOr8LGZ8dG1REA/base/testnet/',
+  'https://rpc-http.mezo.boar.network/Am60KN66zGnT9Rp8hMXWDqfw3yaBcccr',
+];
+
 export const mezoTestnet = defineChain({
   id: 31611,
   name: 'Mezo Testnet',
@@ -11,10 +17,10 @@ export const mezoTestnet = defineChain({
   },
   rpcUrls: {
     default: {
-      http: [process.env['NEXT_PUBLIC_SPECTRUM_RPC_URL']!],
+      http: MEZO_RPC_URLS,
     },
     public: {
-      http: [process.env['NEXT_PUBLIC_SPECTRUM_RPC_URL']!],
+      http: MEZO_RPC_URLS,
     },
   },
   blockExplorers: {

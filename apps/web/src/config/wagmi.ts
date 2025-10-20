@@ -12,7 +12,7 @@ export function createWagmiConfig(): Config {
     return createConfig({
       chains: [mezoTestnet],
       transports: {
-        [mezoTestnet.id]: http(process.env['NEXT_PUBLIC_SPECTRUM_RPC_URL']),
+        [mezoTestnet.id]: http(),
       },
       ssr: true,
     });
@@ -21,10 +21,10 @@ export function createWagmiConfig(): Config {
   // On the client, use the full config with WalletConnect
   return getDefaultConfig({
     appName: 'TippinBit',
-    projectId: process.env['NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID']!,
+    projectId: process.env['NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID'] || '',
     chains: [mezoTestnet],
     transports: {
-      [mezoTestnet.id]: http(process.env['NEXT_PUBLIC_SPECTRUM_RPC_URL']),
+      [mezoTestnet.id]: http(),
     },
     ssr: true, // Enable SSR support for Next.js
   });
