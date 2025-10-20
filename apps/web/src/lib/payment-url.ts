@@ -20,7 +20,7 @@ import type { Address, PaymentUrlParams } from '@/types/domain';
  */
 export function buildPaymentUrl(params: PaymentUrlParams): string {
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || 'https://tippinbit.com';
+    process.env['NEXT_PUBLIC_BASE_URL'] || 'https://tippinbit.com';
 
   if (params.username) {
     // Username-based URL (AC3)
