@@ -248,6 +248,8 @@ export interface QRCodeDisplayProps {
   size?: number;
   /** Show TippinBit logo overlay (default: true) */
   showLogo?: boolean;
+  /** Background color for QR code (transparent if not provided) */
+  backgroundColor?: string;
   /** Callback when QR code is generated */
   onGenerated?: (dataUrl: string) => void;
 }
@@ -275,3 +277,35 @@ export interface PaymentUrlParams {
   /** Optional tip amount in USD */
   amount?: string;
 }
+
+/**
+ * Link format selection for username holders
+ *
+ * Users who have claimed usernames can choose between:
+ * - username: tippinbit.com/pay/@alice (memorable)
+ * - address: tippinbit.com/pay?to=0x742d... (wallet address)
+ */
+export type LinkFormat = 'username' | 'address';
+
+/**
+ * Address link form props
+ */
+export interface AddressLinkFormProps {
+  /** Pre-filled address from URL param */
+  prefilledAddress?: Address;
+}
+
+/**
+ * Social share buttons props
+ */
+export interface SocialShareButtonsProps {
+  /** Payment URL to share */
+  paymentUrl: string;
+  /** Optional username for personalized share text */
+  username?: string;
+}
+
+/**
+ * QR code background type
+ */
+export type QRBackgroundType = 'transparent' | 'white';

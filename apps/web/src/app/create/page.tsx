@@ -1,16 +1,58 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { isAddress } from 'viem';
 import { LinkGeneratorContainer } from '@/components/organisms/LinkGeneratorContainer';
-import type { Metadata } from 'next';
+import type { Address, LinkGeneratorTab } from '@/types/domain';
 
-export const metadata: Metadata = {
-  title: 'Create Your Payment Link | TippinBit',
-  description: 'Claim your @username and generate a shareable payment link',
-};
+/**
+ * Create Page Content Component
+ *
+ * Handles permalink functionality by parsing URL query parameters
+ * and passing them to LinkGeneratorContainer.
+ *
+ * Supports:
+ * - /create?address=0x... (AC9: pre-fill address tab)
+ * - /create?username=alice (future: pre-fill username)
+ */
+function CreatePageContent() {
+  const searchParams = useSearchParams();
+  const addressParam = searchParams?.get('address');
 
-export default function CreatePage() {
+  const [selectedTab, setSelectedTab] = useState<LinkGeneratorTab>('username');
+  const [prefilledAddress, setPrefilledAddress] = useState<Address | undefined>(undefined);
+
+  // Parse URL params on mount (AC9)
+  useEffect(() => {
+    if (addressParam && isAddress(addressParam)) {
+      setPrefilledAddress(addressParam as Address);
+      setSelectedTab('address');
+    }
+  }, [addressParam]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Create Payment Link</h1>
-      <LinkGeneratorContainer />
+      <LinkGeneratorContainer
+        selectedTab={selectedTab}
+        onTabChange={setSelectedTab}
+        {...(prefilledAddress && { prefilledAddress })}
+      />
     </div>
+  );
+}
+
+/**
+ * Create Page
+ *
+ * Entry point for link generation page with Suspense boundary
+ * for useSearchParams.
+ */
+export default function CreatePage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <CreatePageContent />
+    </Suspense>
   );
 }

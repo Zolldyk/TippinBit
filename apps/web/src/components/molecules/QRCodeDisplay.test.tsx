@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { QRCodeDisplay } from './QRCodeDisplay';
 import QRCode from 'qrcode';
 
@@ -217,6 +217,232 @@ describe('QRCodeDisplay', () => {
     await waitFor(() => {
       const img = screen.getByTestId('qr-code-image');
       expect(img).toBeInTheDocument();
+    });
+  });
+
+  describe('Background Color Toggle (AC7 - Story 2.9)', () => {
+    it('uses transparent background by default', async () => {
+      render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+      await waitFor(() => {
+        expect(QRCode.toDataURL).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            color: {
+              dark: '#000000',
+              light: '#00000000', // Transparent default per AC7
+            },
+          })
+        );
+      });
+    });
+
+    it('uses white background when backgroundColor prop is set', async () => {
+      render(
+        <QRCodeDisplay
+          paymentUrl="https://tippinbit.com/pay/@alice"
+          backgroundColor="#FFFFFF"
+        />
+      );
+
+      await waitFor(() => {
+        expect(QRCode.toDataURL).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF',
+            },
+          })
+        );
+      });
+    });
+
+    it('regenerates QR code when background color changes', async () => {
+      const { rerender } = render(
+        <QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />
+      );
+
+      await waitFor(() => {
+        expect(QRCode.toDataURL).toHaveBeenCalledTimes(1);
+      });
+
+      // Change to white background
+      rerender(
+        <QRCodeDisplay
+          paymentUrl="https://tippinbit.com/pay/@alice"
+          backgroundColor="#FFFFFF"
+        />
+      );
+
+      await waitFor(() => {
+        expect(QRCode.toDataURL).toHaveBeenCalledTimes(2);
+        expect(QRCode.toDataURL).toHaveBeenLastCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            color: expect.objectContaining({ light: '#FFFFFF' }),
+          })
+        );
+      });
+    });
+  });
+
+  describe('Error Handling & Retry Mechanism (QA Review Fix)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it(
+      'retries up to 3 times on failure',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>).mockRejectedValue(
+          new Error('Generation failed')
+        );
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        await vi.runAllTimersAsync();
+
+        await waitFor(() => {
+          expect(QRCode.toDataURL).toHaveBeenCalledTimes(3);
+        });
+      },
+      10000
+    );
+
+    it(
+      'shows user-facing error message after all retries exhausted',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>).mockRejectedValue(
+          new Error('Generation failed')
+        );
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        await vi.runAllTimersAsync();
+
+        await waitFor(() => {
+          expect(screen.getByText(/failed to generate qr code/i)).toBeInTheDocument();
+        });
+      },
+      10000
+    );
+
+    it(
+      'displays retry button in error state',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>).mockRejectedValue(
+          new Error('Generation failed')
+        );
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        await vi.runAllTimersAsync();
+
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+        });
+      },
+      10000
+    );
+
+    it(
+      'shows retry attempt count during retries',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>)
+          .mockRejectedValueOnce(new Error('Fail 1'))
+          .mockRejectedValueOnce(new Error('Fail 2'))
+          .mockResolvedValueOnce(mockDataUrl);
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        // Fast forward to first retry
+        await vi.advanceTimersByTimeAsync(1000);
+
+        await waitFor(() => {
+          const retryText = screen.queryByText(/retry attempt 1\/3/i);
+          if (retryText) expect(retryText).toBeInTheDocument();
+        });
+      },
+      10000
+    );
+
+    it(
+      'error container has proper ARIA attributes',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>).mockRejectedValue(
+          new Error('Generation failed')
+        );
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        await vi.runAllTimersAsync();
+
+        await waitFor(() => {
+          const errorContainer = screen.getByRole('alert');
+          expect(errorContainer).toHaveAttribute('aria-live', 'assertive');
+        });
+      },
+      10000
+    );
+
+    it(
+      'retry button has accessible label',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>).mockRejectedValue(
+          new Error('Generation failed')
+        );
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        await vi.runAllTimersAsync();
+
+        await waitFor(() => {
+          const retryButton = screen.getByRole('button', { name: /retry qr code generation/i });
+          expect(retryButton).toHaveAccessibleName();
+        });
+      },
+      10000
+    );
+
+    it(
+      'succeeds on second retry attempt',
+      async () => {
+        (QRCode.toDataURL as ReturnType<typeof vi.fn>)
+          .mockRejectedValueOnce(new Error('First attempt failed'))
+          .mockResolvedValueOnce(mockDataUrl);
+
+        render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+        await vi.runAllTimersAsync();
+
+        await waitFor(() => {
+          const qrImage = screen.getByAltText(expect.stringContaining('QR code'));
+          expect(qrImage).toBeInTheDocument();
+          expect(qrImage).toHaveAttribute('src', mockDataUrl);
+        });
+      },
+      10000
+    );
+
+    it('uses exponential backoff for retries', async () => {
+      (QRCode.toDataURL as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error('Generation failed')
+      );
+
+      render(<QRCodeDisplay paymentUrl="https://tippinbit.com/pay/@alice" />);
+
+      // First retry after 1000ms
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(QRCode.toDataURL).toHaveBeenCalledTimes(2);
+
+      // Second retry after 2000ms more (exponential backoff)
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(QRCode.toDataURL).toHaveBeenCalledTimes(3);
     });
   });
 });

@@ -2,28 +2,52 @@
 
 import { useState } from 'react';
 import { UsernameClaimForm } from '../molecules/UsernameClaimForm';
-import type { LinkGeneratorTab } from '@/types/domain';
+import { AddressLinkForm } from '../molecules/AddressLinkForm';
+import type { LinkGeneratorTab, Address } from '@/types/domain';
+
+export interface LinkGeneratorContainerProps {
+  /** Initial tab selection (supports permalink functionality) */
+  selectedTab?: LinkGeneratorTab;
+  /** Callback when tab changes */
+  onTabChange?: (tab: LinkGeneratorTab) => void;
+  /** Pre-filled address from URL param (supports permalink functionality) */
+  prefilledAddress?: Address;
+}
 
 /**
  * Link Generator Container
  *
  * Main container for creating payment links. Provides two options:
- * 1. Use wallet address (generates link like tippinbit.com/pay/0x123...)
+ * 1. Use wallet address (generates link like tippinbit.com/pay?to=0x123...)
  * 2. Claim @username (generates link like tippinbit.com/pay/@alice)
  *
  * Features:
  * - Tab selector for switching between address and username modes
+ * - Address-based link generation with QR codes (Story 2.9)
+ * - Username-based link generation with claim flow (Story 2.6)
+ * - Permalink support via props (AC9)
  * - Mobile-optimized with full-width layout
  * - Accessible keyboard navigation
  *
  * @example
  * ```typescript
- * <LinkGeneratorContainer />
+ * <LinkGeneratorContainer
+ *   selectedTab="address"
+ *   prefilledAddress="0x742d35Cc..."
+ * />
  * ```
  */
-export function LinkGeneratorContainer() {
-  const [selectedTab, setSelectedTab] =
-    useState<LinkGeneratorTab>('username');
+export function LinkGeneratorContainer({
+  selectedTab: initialTab = 'username',
+  onTabChange,
+  prefilledAddress,
+}: LinkGeneratorContainerProps = {}) {
+  const [selectedTab, setSelectedTab] = useState<LinkGeneratorTab>(initialTab);
+
+  const handleTabChange = (tab: LinkGeneratorTab) => {
+    setSelectedTab(tab);
+    onTabChange?.(tab);
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -39,7 +63,7 @@ export function LinkGeneratorContainer() {
           aria-selected={selectedTab === 'address'}
           aria-controls="address-panel"
           id="address-tab"
-          onClick={() => setSelectedTab('address')}
+          onClick={() => handleTabChange('address')}
           className={`
             flex-1 px-4 py-3 text-sm font-medium transition-colors
             border-b-2 min-h-[44px]
@@ -59,7 +83,7 @@ export function LinkGeneratorContainer() {
           aria-selected={selectedTab === 'username'}
           aria-controls="username-panel"
           id="username-tab"
-          onClick={() => setSelectedTab('username')}
+          onClick={() => handleTabChange('username')}
           className={`
             flex-1 px-4 py-3 text-sm font-medium transition-colors
             border-b-2 min-h-[44px]
@@ -84,14 +108,9 @@ export function LinkGeneratorContainer() {
             aria-labelledby="address-tab"
             className="animate-fadeIn"
           >
-            <div className="p-6 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-600">
-                Address-based payment links coming soon!
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                For now, try claiming a @username to create your payment link.
-              </p>
-            </div>
+            <AddressLinkForm
+              {...(prefilledAddress && { prefilledAddress })}
+            />
           </div>
         )}
 

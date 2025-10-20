@@ -1,34 +1,38 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Debounces a value by delaying updates until after the specified delay period.
- * Useful for delaying expensive operations like API calls until user stops typing.
+ * Debounce hook
+ *
+ * Returns a debounced value that only updates after the specified delay
+ * has passed without the value changing.
+ *
+ * Useful for preventing excessive re-renders or API calls during rapid input.
  *
  * @param value - The value to debounce
- * @param delay - Delay in milliseconds before updating the debounced value
- * @returns The debounced value
+ * @param delay - Delay in milliseconds (default: 300ms)
+ * @returns Debounced value
  *
  * @example
+ * ```typescript
  * const [searchTerm, setSearchTerm] = useState('');
  * const debouncedSearchTerm = useDebounce(searchTerm, 500);
  *
  * useEffect(() => {
  *   // This only runs 500ms after user stops typing
- *   performSearch(debouncedSearchTerm);
+ *   fetchSearchResults(debouncedSearchTerm);
  * }, [debouncedSearchTerm]);
+ * ```
  */
-export function useDebounce<T>(value: T, delay: number): T {
+export function useDebounce<T>(value: T, delay = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    // Set up timeout to update debounced value after delay
-    const timeoutId = setTimeout(() => {
+    const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
 
-    // Cleanup: Clear timeout if value changes before delay completes
     return () => {
-      clearTimeout(timeoutId);
+      clearTimeout(handler);
     };
   }, [value, delay]);
 

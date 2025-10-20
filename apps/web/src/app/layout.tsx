@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 import { Web3Provider } from "@/components/providers/Web3Provider";
 import { Web3ErrorBoundary } from "@/components/providers/Web3ErrorBoundary";
 import { WebVitalsInit } from "@/components/providers/WebVitalsInit";
@@ -42,6 +43,7 @@ export default function RootLayout({
             {children}
           </Web3Provider>
         </Web3ErrorBoundary>
+        <Toaster position="bottom-center" duration={3000} />
       </body>
     </html>
   );
