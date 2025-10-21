@@ -8,10 +8,12 @@ import { Input } from '../atoms/Input';
 import { Button } from '../atoms/Button';
 import { UsernameClaimSuccess } from './UsernameClaimSuccess';
 import { UsernameClaimError } from './UsernameClaimError';
+import { MessagePreview } from './MessagePreview';
 import {
   validateUsername,
   normalizeUsername,
   generateUsernameSuggestions,
+  validateMessageLength,
 } from '@/lib/validation';
 
 /**
@@ -34,6 +36,7 @@ import {
  */
 export function UsernameClaimForm() {
   const [username, setUsername] = useState('');
+  const [message, setMessage] = useState<string>('');
   const { status } = useUsernameAvailability(username);
   const { claimUsername, isPending, isSuccess, isError, error, data, reset } =
     useUsernameClaim();
@@ -42,8 +45,15 @@ export function UsernameClaimForm() {
   const validationError = username.length >= 3 ? validateUsername(username) : null;
   const isValid = validationError === null && username.length >= 3;
 
+  // Validate message length
+  const messageValidation = validateMessageLength(message);
+  const isMessageValid = messageValidation.isValid;
+
+  // Character count for display
+  const charactersRemaining = 200 - message.length;
+
   // Determine if claim button should be enabled
-  const canClaim = isValid && status === 'available' && !isPending;
+  const canClaim = isValid && status === 'available' && !isPending && isMessageValid;
 
   // Generate suggestions if username is taken
   const suggestions =
@@ -66,7 +76,10 @@ export function UsernameClaimForm() {
     if (!canClaim) return;
 
     const cleanUsername = username.replace(/^@/, '');
-    claimUsername({ username: cleanUsername });
+    claimUsername({
+      username: cleanUsername,
+      ...(message && isMessageValid && { thankyouMessage: message }),
+    });
   };
 
   // Handle suggestion click
@@ -167,6 +180,61 @@ export function UsernameClaimForm() {
           </div>
         </div>
       </div>
+
+      {/* Thank-you Message Input (AC1, AC2, AC3, AC4, AC13) */}
+      <div className="space-y-2">
+        <label
+          htmlFor="thankyou-message-username"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Thank-you message (optional)
+        </label>
+        <textarea
+          id="thankyou-message-username"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Optional: Add a personal message (e.g., 'Thank you for the coffee! ❤️')"
+          maxLength={200}
+          rows={3}
+          className="w-full resize-none overflow-y-auto px-4 py-3 text-base
+            border border-gray-300 rounded-lg
+            focus:border-coral focus:ring-2 focus:ring-coral focus:outline-none
+            min-h-[80px] max-h-[200px]"
+          aria-describedby="char-counter-username message-validation-error-username"
+          aria-label="Thank-you message (optional)"
+          disabled={isPending}
+        />
+
+        {/* Character Counter (AC3, AC13) */}
+        <div
+          id="char-counter-username"
+          className="text-sm text-gray-600"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {charactersRemaining} characters remaining
+        </div>
+
+        {/* Validation Error (AC4, AC13) */}
+        {!isMessageValid && (
+          <div
+            id="message-validation-error-username"
+            className="text-sm text-red-600"
+            role="alert"
+            aria-live="assertive"
+          >
+            {messageValidation.error}
+          </div>
+        )}
+      </div>
+
+      {/* Message Preview (AC11) */}
+      {username && message && (
+        <MessagePreview
+          message={message}
+          creatorDisplayName={normalizeUsername(username)}
+        />
+      )}
 
       {/* Username Suggestions */}
       {status === 'taken' && suggestions.length > 0 && (

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { SocialShareButtons } from './SocialShareButtons';
 
@@ -13,15 +13,17 @@ vi.mock('sonner', () => ({
 
 describe('SocialShareButtons', () => {
   const mockPaymentUrl = 'https://tippinbit.com/pay?to=0x9aabD891ab1FaA750FAE5aba9b55623c7F69fD58';
+  let writeTextMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     // Mock window.open
     vi.stubGlobal('open', vi.fn());
 
     // Mock clipboard API
+    writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
       value: {
-        writeText: vi.fn().mockResolvedValue(undefined),
+        writeText: writeTextMock,
       },
       writable: true,
       configurable: true,
@@ -161,7 +163,11 @@ describe('SocialShareButtons', () => {
       const copyButton = screen.getByRole('button', { name: /copy link/i });
       await user.click(copyButton);
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(mockPaymentUrl);
+      // Wait for the async clipboard operation to complete
+      await waitFor(() => {
+        expect(writeTextMock).toHaveBeenCalledWith(mockPaymentUrl);
+      });
+
       expect(toast.success).toHaveBeenCalledWith('Copied!', { duration: 3000 });
     });
   });

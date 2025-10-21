@@ -10,7 +10,10 @@ import { QRCodeDisplay } from './QRCodeDisplay';
 import { QRCodeDownloadButton } from '../atoms/QRCodeDownloadButton';
 import { SocialShareButtons } from './SocialShareButtons';
 import { WalletConnector } from '../organisms/WalletConnector';
+import { MessagePreview } from './MessagePreview';
 import { buildPaymentUrl, generateQRFilename } from '@/lib/payment-url';
+import { truncateAddress } from '@/lib/formatting';
+import { validateMessageLength } from '@/lib/validation';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AddressLinkFormProps, Address } from '@/types/domain';
 
@@ -46,6 +49,7 @@ export function AddressLinkForm({ prefilledAddress }: AddressLinkFormProps) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [whiteBackground, setWhiteBackground] = useState(false);
+  const [message, setMessage] = useState<string>('');
   const qrContainerRef = useRef<HTMLDivElement>(null);
 
   // Debounce custom amount input to prevent excessive re-renders (AC4)
@@ -61,6 +65,16 @@ export function AddressLinkForm({ prefilledAddress }: AddressLinkFormProps) {
   // Validate address (AC1)
   const isValidAddress = address && isAddress(address);
 
+  // Validate message length
+  const messageValidation = validateMessageLength(message);
+  const isMessageValid = messageValidation.isValid;
+
+  // Character count for display
+  const charactersRemaining = 200 - message.length;
+
+  // Creator display name for preview
+  const creatorDisplayName = isValidAddress ? truncateAddress(address) : '';
+
   // Determine current amount value
   const currentAmount = showCustomInput && debouncedCustomAmount
     ? debouncedCustomAmount
@@ -72,8 +86,9 @@ export function AddressLinkForm({ prefilledAddress }: AddressLinkFormProps) {
     return buildPaymentUrl({
       address: address as Address,
       ...(currentAmount && { amount: currentAmount }),
+      ...(message && isMessageValid && { message }),
     });
-  }, [isValidAddress, address, currentAmount]);
+  }, [isValidAddress, address, currentAmount, message, isMessageValid]);
 
   // Generate QR filename
   const qrFilename = useMemo(() => {
@@ -186,6 +201,60 @@ export function AddressLinkForm({ prefilledAddress }: AddressLinkFormProps) {
           </p>
         )}
       </div>
+
+      {/* Thank-you Message Input (AC1, AC2, AC3, AC4, AC13) */}
+      <div className="space-y-2">
+        <label
+          htmlFor="thankyou-message"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Thank-you message (optional)
+        </label>
+        <textarea
+          id="thankyou-message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Optional: Add a personal message (e.g., 'Thank you for the coffee! ❤️')"
+          maxLength={200}
+          rows={3}
+          className="w-full resize-none overflow-y-auto px-4 py-3 text-base
+            border border-gray-300 rounded-lg
+            focus:border-coral focus:ring-2 focus:ring-coral focus:outline-none
+            min-h-[80px] max-h-[200px]"
+          aria-describedby="char-counter message-validation-error"
+          aria-label="Thank-you message (optional)"
+        />
+
+        {/* Character Counter (AC3, AC13) */}
+        <div
+          id="char-counter"
+          className="text-sm text-gray-600"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {charactersRemaining} characters remaining
+        </div>
+
+        {/* Validation Error (AC4, AC13) */}
+        {!isMessageValid && (
+          <div
+            id="message-validation-error"
+            className="text-sm text-red-600"
+            role="alert"
+            aria-live="assertive"
+          >
+            {messageValidation.error}
+          </div>
+        )}
+      </div>
+
+      {/* Message Preview (AC11) */}
+      {isValidAddress && message && (
+        <MessagePreview
+          message={message}
+          creatorDisplayName={creatorDisplayName}
+        />
+      )}
 
       {/* Payment Link Display (AC1) */}
       {isValidAddress && (

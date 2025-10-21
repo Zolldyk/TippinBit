@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, parseAmountInput, calculateMaxSendable } from './formatting';
+import {
+  formatCurrency,
+  parseAmountInput,
+  calculateMaxSendable,
+  encodeMessageForUrl,
+  decodeMessageFromUrl,
+} from './formatting';
 
 describe('formatCurrency', () => {
   it('formats whole numbers with 2 decimals', () => {
@@ -124,5 +130,74 @@ describe('calculateMaxSendable', () => {
   it('returns 0 when result would be negative', () => {
     const result = calculateMaxSendable(BigInt(1), BigInt(100));
     expect(result).toBe(BigInt(0));
+  });
+});
+
+describe('encodeMessageForUrl', () => {
+  it('encodes special characters', () => {
+    const input = 'Thank you for the coffee!';
+    const encoded = encodeMessageForUrl(input);
+    expect(encoded).toBe('Thank%20you%20for%20the%20coffee!');
+  });
+
+  it('encodes emoji correctly', () => {
+    const input = 'Thank you! ☕';
+    const encoded = encodeMessageForUrl(input);
+    expect(encoded).toBe('Thank%20you!%20%E2%98%95');
+  });
+
+  it('handles empty messages', () => {
+    expect(encodeMessageForUrl('')).toBe('');
+    expect(encodeMessageForUrl('   ')).toBe('');
+  });
+
+  it('trims whitespace before encoding', () => {
+    const input = '  Thank you!  ';
+    const encoded = encodeMessageForUrl(input);
+    expect(encoded).toBe('Thank%20you!');
+  });
+
+  it('preserves emoji encoding for roundtrip', () => {
+    const input = '❤️🙏🚀';
+    const encoded = encodeMessageForUrl(input);
+    const decoded = decodeMessageFromUrl(encoded);
+    expect(decoded).toBe(input);
+  });
+
+  it('encodes special URL characters', () => {
+    const input = 'Hello & goodbye!';
+    const encoded = encodeMessageForUrl(input);
+    expect(encoded).toBe('Hello%20%26%20goodbye!');
+  });
+});
+
+describe('decodeMessageFromUrl', () => {
+  it('decodes URL-encoded messages', () => {
+    const encoded = 'Thank%20you!';
+    expect(decodeMessageFromUrl(encoded)).toBe('Thank you!');
+  });
+
+  it('decodes emoji', () => {
+    const encoded = 'Thank%20you!%20%E2%98%95';
+    expect(decodeMessageFromUrl(encoded)).toBe('Thank you! ☕');
+  });
+
+  it('handles malformed encoding gracefully', () => {
+    const malformed = 'Thank%2you'; // Invalid encoding
+    expect(decodeMessageFromUrl(malformed)).toBe('');
+  });
+
+  it('handles empty string', () => {
+    expect(decodeMessageFromUrl('')).toBe('');
+  });
+
+  it('decodes special characters', () => {
+    const encoded = 'Hello%20%26%20goodbye!';
+    expect(decodeMessageFromUrl(encoded)).toBe('Hello & goodbye!');
+  });
+
+  it('handles multiple spaces', () => {
+    const encoded = 'Hello%20%20world';
+    expect(decodeMessageFromUrl(encoded)).toBe('Hello  world');
   });
 });

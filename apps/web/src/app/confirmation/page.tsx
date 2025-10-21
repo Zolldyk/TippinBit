@@ -5,7 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import { isAddress } from 'viem';
 import type { Address } from 'viem';
 import { validateTxHash } from '@/lib/error-parser';
+import { decodeMessageFromUrl } from '@/lib/formatting';
 import { TransactionConfirmationContent } from '@/components/organisms/TransactionConfirmationContent';
+import type { UsernameLookupResponse } from '@/types/domain';
 
 /**
  * TransactionConfirmationPage displays success message after a tip is sent.
@@ -24,12 +26,14 @@ import { TransactionConfirmationContent } from '@/components/organisms/Transacti
 function ConfirmationPageContent() {
   const searchParams = useSearchParams();
   const [timestamp, setTimestamp] = useState<string>('');
+  const [storedMessage, setStoredMessage] = useState<string | undefined>();
 
   // Extract URL parameters
   const txHash = searchParams.get('tx');
   const amountParam = searchParams.get('amount');
   const recipientParam = searchParams.get('recipient');
   const usernameParam = searchParams.get('username');
+  const messageParam = searchParams.get('message');
 
   // Validate transaction hash
   const isValidHash = txHash && validateTxHash(txHash);
@@ -53,6 +57,45 @@ function ConfirmationPageContent() {
     usernameParam && usernameParam.startsWith('@')
       ? (usernameParam as `@${string}`)
       : null;
+
+  // Decode message from URL parameter (AC8)
+  const urlMessage = messageParam ? decodeMessageFromUrl(messageParam) : undefined;
+
+  // Fetch stored message for @username if applicable (AC7, AC12)
+  useEffect(() => {
+    if (validatedUsername && !urlMessage) {
+      const cleanUsername = validatedUsername.replace('@', '');
+
+      // Fetch from username-lookup API with timeout (AC12)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+      fetch(`/.netlify/functions/username-lookup?username=${cleanUsername}`, {
+        signal: controller.signal,
+      })
+        .then((res) => {
+          clearTimeout(timeoutId);
+          if (!res.ok) {
+            // Handle 404/500 gracefully - fallback to URL message or generic (AC12)
+            return null;
+          }
+          return res.json();
+        })
+        .then((data: UsernameLookupResponse | null) => {
+          if (data?.thankyouMessage) {
+            setStoredMessage(data.thankyouMessage);
+          }
+        })
+        .catch((err) => {
+          // Handle network timeout/CORS/errors gracefully (AC12)
+          console.error('Failed to fetch username message:', err);
+          // Fallback to URL message or generic message
+        });
+    }
+  }, [validatedUsername, urlMessage]);
+
+  // URL message takes precedence over stored message (AC12)
+  const finalMessage = urlMessage || storedMessage;
 
   // Format timestamp (client-side)
   useEffect(() => {
@@ -108,6 +151,7 @@ function ConfirmationPageContent() {
         recipient={validatedRecipient}
         username={validatedUsername}
         timestamp={timestamp}
+        {...(finalMessage && { thankyouMessage: finalMessage })}
       />
     </main>
   );

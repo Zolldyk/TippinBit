@@ -111,3 +111,73 @@ export function formatTimeAgo(timestamp: number): string {
   if (hours === 1) return '1 hour ago';
   return `${hours} hours ago`;
 }
+
+/**
+ * Truncates an Ethereum address to a shorter display format
+ *
+ * Takes a full Ethereum address and returns a shortened version
+ * showing the first 6 characters and last 4 characters.
+ *
+ * @param address - Full Ethereum address (0x... format)
+ * @returns Truncated address string (e.g., "0x1234...5678")
+ *
+ * @example
+ * truncateAddress("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb")
+ * // Returns: "0x742d...f0bEb"
+ */
+export function truncateAddress(address: string): string {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+/**
+ * Encode message for URL parameter
+ *
+ * Handles special characters, emoji, and spaces safely using
+ * URL encoding (percent encoding).
+ *
+ * @param message - The message text to encode
+ * @returns URL-encoded message string, or empty string if invalid
+ *
+ * @example
+ * encodeMessageForUrl("Thank you for the coffee! ☕")
+ * // Returns: "Thank%20you%20for%20the%20coffee!%20%E2%98%95"
+ *
+ * encodeMessageForUrl("  ")
+ * // Returns: ""
+ */
+export function encodeMessageForUrl(message: string): string {
+  if (!message || message.trim().length === 0) {
+    return '';
+  }
+
+  return encodeURIComponent(message.trim());
+}
+
+/**
+ * Decode message from URL parameter
+ *
+ * Decodes a URL-encoded message string back to plain text.
+ * Returns empty string if decoding fails.
+ *
+ * @param encodedMessage - The URL-encoded message string
+ * @returns Decoded message string, or empty string if invalid
+ *
+ * @example
+ * decodeMessageFromUrl("Thank%20you!")
+ * // Returns: "Thank you!"
+ *
+ * decodeMessageFromUrl("invalid%2")
+ * // Returns: "" (malformed encoding)
+ */
+export function decodeMessageFromUrl(encodedMessage: string): string {
+  if (!encodedMessage) {
+    return '';
+  }
+
+  try {
+    return decodeURIComponent(encodedMessage);
+  } catch (error) {
+    console.error('Failed to decode message:', error);
+    return '';
+  }
+}

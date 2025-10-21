@@ -126,42 +126,79 @@ describe('UsernameClaimForm', () => {
   });
 
   describe('Availability Indicators', () => {
-    it('shows green checkmark and "Available!" when username is available', () => {
+    it('shows green checkmark and "Available!" when username is available', async () => {
+      const user = userEvent.setup();
+
+      // Set mock to return 'available' status before rendering
       mockUseUsernameAvailability.mockReturnValue({
         status: 'available',
       });
 
-      render(<UsernameClaimForm />);
+      const { rerender } = render(<UsernameClaimForm />);
 
-      expect(screen.getByText('Available!')).toBeInTheDocument();
+      // Type a valid username (3+ chars) to trigger isValid = true
+      const input = screen.getByPlaceholderText('@yourname');
+      await user.type(input, 'alice');
+
+      // Force a re-render to ensure the component updates with both status='available' and isValid=true
+      rerender(<UsernameClaimForm />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Available!')).toBeInTheDocument();
+      });
+
       // Check for Check icon (checkmark)
       const statusDiv = screen.getByRole('status');
       expect(statusDiv).toHaveTextContent('Available!');
     });
 
-    it('shows red X and "Already taken" when username is taken', () => {
+    it('shows red X and "Already taken" when username is taken', async () => {
+      const user = userEvent.setup();
+
+      // Set mock to return 'taken' status before rendering
       mockUseUsernameAvailability.mockReturnValue({
         status: 'taken',
       });
 
-      render(<UsernameClaimForm />);
+      const { rerender } = render(<UsernameClaimForm />);
 
-      expect(screen.getByText('Already taken')).toBeInTheDocument();
+      // Type a valid username
+      const input = screen.getByPlaceholderText('@yourname');
+      await user.type(input, 'alice');
+
+      // Force a re-render
+      rerender(<UsernameClaimForm />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Already taken')).toBeInTheDocument();
+      });
     });
 
-    it('shows spinner while checking availability', () => {
+    it('shows spinner while checking availability', async () => {
+      const user = userEvent.setup();
+
+      // Set mock to return 'checking' status before rendering
       mockUseUsernameAvailability.mockReturnValue({
         status: 'checking',
       });
 
-      render(<UsernameClaimForm />);
+      const { rerender } = render(<UsernameClaimForm />);
 
-      const statusDiv = screen.getByRole('status');
-      expect(statusDiv).toBeInTheDocument();
-      // Spinner is present but hidden for screen readers
-      expect(screen.getByText('Checking availability...')).toHaveClass(
-        'sr-only'
-      );
+      // Type a valid username
+      const input = screen.getByPlaceholderText('@yourname');
+      await user.type(input, 'alice');
+
+      // Force a re-render
+      rerender(<UsernameClaimForm />);
+
+      await waitFor(() => {
+        const statusDiv = screen.getByRole('status');
+        expect(statusDiv).toBeInTheDocument();
+        // Spinner is present but hidden for screen readers
+        expect(screen.getByText('Checking availability...')).toHaveClass(
+          'sr-only'
+        );
+      });
     });
 
     it('shows "Unable to check" when status is unknown', () => {

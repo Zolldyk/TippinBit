@@ -19,6 +19,10 @@ const claimSchema = z.object({
     .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
   message: z.string(),
   signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature'),
+  thankyouMessage: z
+    .string()
+    .max(200, 'Thank-you message must be at most 200 characters')
+    .optional(),
 });
 
 // CORS headers for frontend requests
@@ -99,7 +103,7 @@ export const handler: Handler = async (
     const body = JSON.parse(event.body || '{}');
     const validated = claimSchema.parse(body);
 
-    const { username, walletAddress, message, signature } = validated;
+    const { username, walletAddress, message, signature, thankyouMessage } = validated;
 
     // Verify signature
     const expectedMessage = standardizeMessage(`claim @${username}`);
@@ -150,6 +154,12 @@ export const handler: Handler = async (
 
     // Create reverse index: address -> usernames
     await redis.sadd(`address:${walletAddress}:usernames`, normalizedUsername);
+
+    // Store thank-you message if provided (stored separately with no TTL)
+    if (thankyouMessage) {
+      const messageKey = `username:${normalizedUsername}:message`;
+      await redis.set(messageKey, thankyouMessage); // No TTL - persists with username
+    }
 
     // Success response
     return {

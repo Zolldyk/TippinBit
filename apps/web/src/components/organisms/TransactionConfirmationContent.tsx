@@ -4,10 +4,14 @@ import { useState, useEffect } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import type { Address } from 'viem';
 import type { Username } from '@/types/domain';
-import { SocialShareButton } from '@/components/molecules/SocialShareButton';
+import { TransactionShareButton } from '@/components/molecules/TransactionShareButton';
+import { UniversalShareButtons } from '@/components/molecules/UniversalShareButtons';
 import { ReturnButton } from '@/components/molecules/ReturnButton';
 import { CopyButton } from '@/components/molecules/CopyButton';
 import { CollapsibleExplorer } from '@/components/molecules/CollapsibleExplorer';
+import { buildPaymentUrl } from '@/lib/payment-url';
+import { truncateAddress } from '@/lib/formatting';
+import { sanitizeMessage } from '@/lib/validation';
 
 export interface TransactionConfirmationContentProps {
   txHash: string;
@@ -15,6 +19,7 @@ export interface TransactionConfirmationContentProps {
   recipient?: Address | null;
   username?: Username | null;
   timestamp: string;
+  thankyouMessage?: string;
 }
 
 /**
@@ -29,6 +34,7 @@ export function TransactionConfirmationContent({
   recipient,
   username,
   timestamp,
+  thankyouMessage,
 }: TransactionConfirmationContentProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -38,10 +44,21 @@ export function TransactionConfirmationContent({
     return () => clearTimeout(timeout);
   }, []);
 
-  // Truncate address helper
-  const truncateAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
+  // Build creator payment URL (AC7, AC9)
+  const creatorPaymentUrl = username
+    ? buildPaymentUrl({ username })
+    : recipient
+      ? buildPaymentUrl({ address: recipient })
+      : null;
+
+  // Creator display name for share text (AC7, AC9)
+  const creatorDisplayName = username || (recipient ? truncateAddress(recipient) : 'this creator');
+
+  // Sanitize and prepare thank-you message (AC8, AC9, AC10)
+  const sanitizedMessage = thankyouMessage ? sanitizeMessage(thankyouMessage) : undefined;
+  const displayMessage = sanitizedMessage
+    ? `${creatorDisplayName} says: ${sanitizedMessage}`
+    : 'Thank you for your support! ❤️';
 
   // Build explorer link
   const explorerLink = `https://explorer.test.mezo.org/tx/${txHash}`;
@@ -108,16 +125,26 @@ export function TransactionConfirmationContent({
         </div>
       </div>
 
-      {/* Thank you message */}
-      <div className="mb-6 rounded-lg bg-teal-50 p-4 text-center">
-        <p className="text-sm text-teal-800">
-          Thank you for your support! ❤️
+      {/* Thank you message (AC8, AC9) */}
+      <div className="mb-6 rounded-lg bg-teal-light/10 p-4 border border-teal-light text-center">
+        <p className="text-base text-gray-800">
+          {displayMessage}
         </p>
       </div>
 
-      {/* Social sharing section */}
+      {/* Universal sharing section - Share creator's payment link */}
+      {creatorPaymentUrl && (
+        <div className="mb-6 flex justify-center">
+          <UniversalShareButtons
+            creatorPaymentUrl={creatorPaymentUrl}
+            creatorDisplayName={creatorDisplayName}
+          />
+        </div>
+      )}
+
+      {/* Transaction sharing section - Share transaction confirmation */}
       <div className="mb-6 flex justify-center">
-        <SocialShareButton
+        <TransactionShareButton
           {...(recipient !== undefined && { recipient })}
           {...(username !== undefined && { username })}
           txHash={txHash}

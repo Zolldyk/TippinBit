@@ -7,12 +7,14 @@ import type { Address, PaymentUrlParams } from '@/types/domain';
  * - Username-based payments (@alice)
  * - Address-based payments (0x123...)
  * - Optional amount parameter
+ * - Optional thank-you message parameter
  *
  * Examples:
  * - Username: https://tippinbit.com/pay/@alice
  * - Username + amount: https://tippinbit.com/pay/@alice?amount=5
+ * - Username + message: https://tippinbit.com/pay/@alice?message=Thank%20you!
  * - Address: https://tippinbit.com/pay?to=0x123...
- * - Address + amount: https://tippinbit.com/pay?to=0x123...&amount=5
+ * - Address + amount + message: https://tippinbit.com/pay?to=0x123...&amount=5&message=Thank%20you!
  *
  * @param params - Payment URL parameters
  * @returns Full payment URL string
@@ -36,6 +38,13 @@ export function buildPaymentUrl(params: PaymentUrlParams): string {
       url.searchParams.set('amount', params.amount); // AC11
     }
 
+    if (params.message) {
+      const trimmedMessage = params.message.trim();
+      if (trimmedMessage) {
+        url.searchParams.set('message', trimmedMessage); // AC5, AC6 - URL.searchParams.set handles encoding
+      }
+    }
+
     return url.toString();
   }
 
@@ -47,6 +56,13 @@ export function buildPaymentUrl(params: PaymentUrlParams): string {
 
     if (params.amount) {
       url.searchParams.set('amount', params.amount); // AC11
+    }
+
+    if (params.message) {
+      const trimmedMessage = params.message.trim();
+      if (trimmedMessage) {
+        url.searchParams.set('message', trimmedMessage); // AC5, AC6 - URL.searchParams.set handles encoding
+      }
     }
 
     return url.toString();

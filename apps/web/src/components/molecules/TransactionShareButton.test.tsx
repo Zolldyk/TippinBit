@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SocialShareButton } from './SocialShareButton';
+import { TransactionShareButton } from './TransactionShareButton';
 
-describe('SocialShareButton', () => {
+describe('TransactionShareButton', () => {
   const mockTxHash = '0x' + '1'.repeat(64);
   const mockRecipient = '0x9aabD891ab1FaA750FAE5aba9b55623c7F69fD58' as `0x${string}`;
 
@@ -33,12 +33,12 @@ describe('SocialShareButton', () => {
 
   describe('Rendering', () => {
     it('renders section heading', () => {
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
       expect(screen.getByText('Share your support')).toBeInTheDocument();
     });
 
     it('renders all three social platform buttons', () => {
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       expect(screen.getByLabelText('Share on X (Twitter)')).toBeInTheDocument();
       expect(screen.getByLabelText('Copy link for Instagram')).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('SocialShareButton', () => {
     });
 
     it('displays platform button labels', () => {
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       expect(screen.getByText('X')).toBeInTheDocument();
       expect(screen.getByText('Instagram')).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe('SocialShareButton', () => {
 
   describe('Twitter/X Sharing', () => {
     it('generates correct Twitter intent URL with recipient', () => {
-      render(<SocialShareButton recipient={mockRecipient} txHash={mockTxHash} />);
+      render(<TransactionShareButton recipient={mockRecipient} txHash={mockTxHash} />);
 
       const twitterLink = screen.getByLabelText('Share on X (Twitter)');
       const href = twitterLink.getAttribute('href');
@@ -70,7 +70,7 @@ describe('SocialShareButton', () => {
     });
 
     it('generates correct Twitter intent URL without recipient', () => {
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const twitterLink = screen.getByLabelText('Share on X (Twitter)');
       const href = twitterLink.getAttribute('href');
@@ -82,7 +82,7 @@ describe('SocialShareButton', () => {
     });
 
     it('opens Twitter link in new window', () => {
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const twitterLink = screen.getByLabelText('Share on X (Twitter)');
 
@@ -95,7 +95,7 @@ describe('SocialShareButton', () => {
     // Skipped: Functionality verified by toast notification test below
     it.skip('copies link when Instagram button clicked', async () => {
       const user = userEvent.setup();
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const instagramButton = screen.getByLabelText('Copy link for Instagram');
       await user.click(instagramButton);
@@ -110,7 +110,7 @@ describe('SocialShareButton', () => {
 
     it('shows toast notification after copying for Instagram', async () => {
       const user = userEvent.setup();
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const instagramButton = screen.getByLabelText('Copy link for Instagram');
       await user.click(instagramButton);
@@ -128,7 +128,7 @@ describe('SocialShareButton', () => {
       vi.useFakeTimers();
       try {
         const user = userEvent.setup({ delay: null });
-        render(<SocialShareButton txHash={mockTxHash} />);
+        render(<TransactionShareButton txHash={mockTxHash} />);
 
         const instagramButton = screen.getByLabelText('Copy link for Instagram');
         await user.click(instagramButton);
@@ -152,7 +152,7 @@ describe('SocialShareButton', () => {
     // Skipped: Functionality verified by toast notification test below
     it.skip('copies link when TikTok button clicked', async () => {
       const user = userEvent.setup();
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const tiktokButton = screen.getByLabelText('Copy link for TikTok');
       await user.click(tiktokButton);
@@ -167,7 +167,7 @@ describe('SocialShareButton', () => {
 
     it('shows toast notification after copying for TikTok', async () => {
       const user = userEvent.setup();
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const tiktokButton = screen.getByLabelText('Copy link for TikTok');
       await user.click(tiktokButton);
@@ -183,7 +183,7 @@ describe('SocialShareButton', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA labels for all buttons', () => {
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       expect(screen.getByLabelText('Share on X (Twitter)')).toBeInTheDocument();
       expect(screen.getByLabelText('Copy link for Instagram')).toBeInTheDocument();
@@ -192,7 +192,7 @@ describe('SocialShareButton', () => {
 
     it('toast has proper role and aria-live attributes', async () => {
       const user = userEvent.setup();
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const instagramButton = screen.getByLabelText('Copy link for Instagram');
       await user.click(instagramButton);
@@ -207,7 +207,7 @@ describe('SocialShareButton', () => {
     });
 
     it('icons have aria-hidden attribute', () => {
-      const { container } = render(<SocialShareButton txHash={mockTxHash} />);
+      const { container } = render(<TransactionShareButton txHash={mockTxHash} />);
 
       const icons = container.querySelectorAll('svg');
       icons.forEach(icon => {
@@ -218,7 +218,7 @@ describe('SocialShareButton', () => {
 
   describe('Address Truncation', () => {
     it('truncates recipient address correctly in Twitter share text', () => {
-      render(<SocialShareButton recipient={mockRecipient} txHash={mockTxHash} />);
+      render(<TransactionShareButton recipient={mockRecipient} txHash={mockTxHash} />);
 
       const twitterLink = screen.getByLabelText('Share on X (Twitter)');
       const href = twitterLink.getAttribute('href');
@@ -230,7 +230,7 @@ describe('SocialShareButton', () => {
 
   describe('Prefers Reduced Motion', () => {
     it('applies motion-reduce classes to all buttons', () => {
-      const { container } = render(<SocialShareButton txHash={mockTxHash} />);
+      const { container } = render(<TransactionShareButton txHash={mockTxHash} />);
 
       const buttons = container.querySelectorAll('a, button');
       buttons.forEach(button => {
@@ -241,7 +241,7 @@ describe('SocialShareButton', () => {
 
     it('applies motion-reduce classes to toast', async () => {
       const user = userEvent.setup();
-      render(<SocialShareButton txHash={mockTxHash} />);
+      render(<TransactionShareButton txHash={mockTxHash} />);
 
       const instagramButton = screen.getByLabelText('Copy link for Instagram');
       await user.click(instagramButton);

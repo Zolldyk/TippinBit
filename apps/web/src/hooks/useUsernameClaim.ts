@@ -57,7 +57,7 @@ export function useUsernameClaim() {
   const { signMessageAsync } = useSignMessage();
 
   const mutation = useMutation({
-    mutationFn: async ({ username }: { username: string }) => {
+    mutationFn: async ({ username, thankyouMessage }: { username: string; thankyouMessage?: string }) => {
       // Validate wallet connection
       if (!isConnected || !address) {
         throw new UsernameClaimError(
@@ -90,6 +90,7 @@ export function useUsernameClaim() {
         walletAddress: address,
         message,
         signature,
+        ...(thankyouMessage && { thankyouMessage }),
       };
 
       // POST to username claim API

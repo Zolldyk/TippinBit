@@ -138,3 +138,78 @@ export function generateUsernameSuggestions(baseUsername: string): string[] {
 
   return [`@${clean}2`, `@${clean}_creator`, `@${clean}writes`];
 }
+
+/**
+ * Sanitize message to prevent XSS attacks
+ *
+ * Strips HTML tags while preserving plain text and emoji.
+ * Enforces 200 character limit as defense in depth.
+ *
+ * @param message - The message text to sanitize
+ * @returns Sanitized message string (plain text + emoji only)
+ *
+ * @example
+ * ```typescript
+ * sanitizeMessage('Hello <b>world</b>!');
+ * // Returns: 'Hello world!'
+ *
+ * sanitizeMessage('<script>alert("XSS")</script>Hello');
+ * // Returns: 'Hello'
+ *
+ * sanitizeMessage('Thank you! ❤️🙏');
+ * // Returns: 'Thank you! ❤️🙏'
+ *
+ * sanitizeMessage('a'.repeat(250));
+ * // Returns: 'aaa...' (200 chars max)
+ * ```
+ */
+export function sanitizeMessage(message: string): string {
+  if (!message || typeof message !== 'string') {
+    return '';
+  }
+
+  // Strip HTML tags using a more comprehensive approach
+  // First remove script and style tags with their content
+  let cleaned = message.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  cleaned = cleaned.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+
+  // Then remove all remaining HTML tags
+  cleaned = cleaned.replace(/<[^>]*>/g, '');
+
+  // Trim whitespace
+  cleaned = cleaned.trim();
+
+  // Enforce 200 character limit (defense in depth)
+  return cleaned.slice(0, 200);
+}
+
+/**
+ * Validate message length
+ *
+ * Checks if message length is within the 200 character limit.
+ *
+ * @param message - The message text to validate
+ * @returns Validation result with isValid flag and optional error message
+ *
+ * @example
+ * ```typescript
+ * validateMessageLength('Thank you!');
+ * // Returns: { isValid: true }
+ *
+ * validateMessageLength('a'.repeat(201));
+ * // Returns: { isValid: false, error: 'Message too long. Please shorten to 200 characters.' }
+ * ```
+ */
+export function validateMessageLength(message: string): {
+  isValid: boolean;
+  error?: string;
+} {
+  if (message.length > 200) {
+    return {
+      isValid: false,
+      error: 'Message too long. Please shorten to 200 characters.',
+    };
+  }
+
+  return { isValid: true };
+}

@@ -2,15 +2,20 @@ import { Share2, Camera, Music, Copy } from 'lucide-react';
 import { useState } from 'react';
 import type { Address } from 'viem';
 import type { Username } from '@/types/domain';
+import { truncateAddress } from '@/lib/formatting';
 
-export interface SocialShareButtonProps {
+export interface TransactionShareButtonProps {
   recipient?: Address | null;
   username?: Username | null;
   txHash: string;
 }
 
 /**
- * SocialShareButton component for sharing tip confirmations on social media
+ * TransactionShareButton component for sharing transaction confirmations on social media
+ *
+ * NOTE: This component shares transaction confirmation links (/confirmation?tx=0x...),
+ * NOT creator payment links (/pay/@alice). For sharing creator payment links,
+ * use UniversalShareButtons instead.
  *
  * Features:
  * - Twitter/X: Direct share with pre-filled message and hashtags
@@ -25,18 +30,13 @@ export interface SocialShareButtonProps {
  * @param username - Optional username to display in share text
  * @param txHash - Transaction hash for the tip
  */
-export function SocialShareButton({
+export function TransactionShareButton({
   recipient,
   username,
   txHash,
-}: SocialShareButtonProps) {
+}: TransactionShareButtonProps) {
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [copiedPlatform, setCopiedPlatform] = useState<string>('');
-
-  // Truncate address helper (first 6 + last 4 chars)
-  const truncateAddress = (address: Address) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
 
   // Generate shareable link
   const shareableLink = `https://tippinbit.com/confirmation?tx=${txHash}`;

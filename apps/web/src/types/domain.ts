@@ -88,6 +88,7 @@ export interface UsernameRecord {
   message: string; // The message that was signed
   signature: string; // EIP-191 signature
   claimedAt: string; // ISO 8601 timestamp
+  thankyouMessage?: string; // Optional thank-you message for supporters
 }
 
 /**
@@ -100,6 +101,7 @@ export interface UsernameClaimRequest {
   walletAddress: Address;
   message: string;
   signature: string;
+  thankyouMessage?: string; // Optional thank-you message for supporters
 }
 
 /**
@@ -122,6 +124,7 @@ export interface UsernameLookupResponse {
   username: string;
   walletAddress: Address;
   claimedAt: string;
+  thankyouMessage?: string; // Optional thank-you message for supporters
 }
 
 /**
@@ -276,6 +279,8 @@ export interface PaymentUrlParams {
   address?: Address;
   /** Optional tip amount in USD */
   amount?: string;
+  /** Optional thank-you message from creator */
+  message?: string;
 }
 
 /**

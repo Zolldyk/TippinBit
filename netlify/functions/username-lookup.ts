@@ -1,5 +1,5 @@
 import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
-import { getUsernameRecord } from './utils/redis';
+import { getUsernameRecord, redis } from './utils/redis';
 
 // CORS and caching headers
 const headers = {
@@ -84,15 +84,25 @@ export const handler: Handler = async (
       };
     }
 
+    // Fetch thank-you message if exists (stored as plain text)
+    const messageKey = `username:${username}:message`;
+    const thankyouMessage = await redis.get(messageKey);
+
     // Success response
+    const response: Record<string, unknown> = {
+      username,
+      walletAddress: record.walletAddress,
+      claimedAt: record.claimedAt,
+    };
+
+    if (thankyouMessage) {
+      response.thankyouMessage = thankyouMessage as string;
+    }
+
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
-        username,
-        walletAddress: record.walletAddress,
-        claimedAt: record.claimedAt,
-      }),
+      body: JSON.stringify(response),
     };
   } catch (error) {
     console.error('Username lookup error:', error);
