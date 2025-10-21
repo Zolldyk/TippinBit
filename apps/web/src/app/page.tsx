@@ -1,17 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
 import { Button } from '@/components/atoms/Button';
 import { ArrowRight, Zap, Shield, Coins } from 'lucide-react';
 
-const PaymentLinkGenerator = dynamic(
-  () => import('@/components/organisms/PaymentLinkGenerator').then(mod => ({ default: mod.PaymentLinkGenerator })),
-  { loading: () => <div className="text-neutral-600">Loading...</div> }
-);
-
 export default function Home() {
-  const [showLinkGenerator, setShowLinkGenerator] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-neutral-50">
@@ -26,30 +18,16 @@ export default function Home() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <div className="mt-8 flex justify-center">
             <Button
               variant="primary"
-              onClick={() => setShowLinkGenerator(true)}
+              onClick={() => window.location.href = '/create'}
               className="min-w-[200px]"
             >
               Create payment link <ArrowRight size={20} />
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => window.location.href = '/showcase'}
-              className="min-w-[200px]"
-            >
-              View design system
-            </Button>
           </div>
         </div>
-
-        {/* Payment Link Generator */}
-        {showLinkGenerator && (
-          <div className="mt-12 flex justify-center">
-            <PaymentLinkGenerator />
-          </div>
-        )}
 
         {/* Features */}
         <div className="mt-20 grid gap-8 sm:grid-cols-3">
@@ -113,10 +91,10 @@ export default function Home() {
                 2
               </div>
               <h3 className="mb-2 font-semibold text-neutral-900">
-                Share on X
+                Share your link
               </h3>
               <p className="text-sm text-neutral-600">
-                Post your payment link on X/Twitter for supporters to find
+                Post your payment link across platforms for supporters to find
               </p>
             </div>
 

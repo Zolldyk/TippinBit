@@ -33,7 +33,7 @@ function CreatePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Create Payment Link</h1>
+      <h1 className="text-3xl font-bold mb-6">Create payment link</h1>
       <LinkGeneratorContainer
         selectedTab={selectedTab}
         onTabChange={setSelectedTab}
