@@ -21,7 +21,10 @@ import { buttonVariants, useReducedMotion } from '@/lib/animations';
 
 export interface ButtonProps
   extends BaseComponentProps,
-    Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'style'> {
+    Omit<
+      ButtonHTMLAttributes<HTMLButtonElement>,
+      'className' | 'style' | 'onDrag' | 'onDragStart' | 'onDragEnd'
+    > {
   /**
    * Button variant
    * @default 'primary'
