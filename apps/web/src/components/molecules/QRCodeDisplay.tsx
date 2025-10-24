@@ -157,11 +157,15 @@ export function QRCodeDisplay({
   return (
     <div className="relative inline-block qr-code-container">
       {/* QR Code Image */}
-      <img
+      <Image
         src={qrCodeDataUrl}
         alt={`QR code for ${paymentUrl}`}
+        width={size}
+        height={size}
         className="w-full h-auto max-w-[400px] md:w-[300px] md:h-[300px] rounded-lg"
         data-testid="qr-code-image"
+        unoptimized
+        priority
       />
 
       {/* Logo Overlay (AC7: optional enhancement) */}
