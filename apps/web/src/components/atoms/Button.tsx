@@ -14,14 +14,14 @@
 'use client';
 
 import { ButtonHTMLAttributes, useCallback } from 'react';
-import { motion } from 'motion/react';
+import { motion, type MotionStyle } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { BaseComponentProps, ButtonVariant } from '@/types/components';
 import { buttonVariants, useReducedMotion } from '@/lib/animations';
 
 export interface ButtonProps
   extends BaseComponentProps,
-    Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'style'> {
   /**
    * Button variant
    * @default 'primary'
@@ -39,6 +39,11 @@ export interface ButtonProps
    * @default false
    */
   disabled?: boolean;
+
+  /**
+   * Inline styles (compatible with Framer Motion)
+   */
+  style?: MotionStyle;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
