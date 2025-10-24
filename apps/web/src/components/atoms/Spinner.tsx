@@ -1,6 +1,12 @@
-import { type HTMLAttributes } from 'react';
+'use client';
 
-interface SpinnerProps extends HTMLAttributes<HTMLDivElement> {
+import { motion } from 'motion/react';
+import {
+  useReducedMotion,
+  ANIMATION_TIMING,
+} from '@/lib/animations';
+
+interface SpinnerProps {
   /**
    * Size of the spinner in pixels
    * @default 20
@@ -11,10 +17,17 @@ interface SpinnerProps extends HTMLAttributes<HTMLDivElement> {
    * @default 'currentColor'
    */
   color?: string;
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
 }
 
 /**
  * Spinner component for loading states
+ *
+ * AC 11: Fades in (opacity 0→1) after 500ms delay, 300ms transition
+ * AC 14: Respects prefers-reduced-motion (instant appearance)
  *
  * Uses a CSS animation for smooth rotation with accessible markup.
  */
@@ -22,17 +35,28 @@ export function Spinner({
   size = 20,
   color = 'currentColor',
   className = '',
-  ...props
 }: SpinnerProps) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div
+    <motion.div
       role="status"
       aria-label="Loading"
       className={`inline-block ${className}`}
-      {...props}
+      // AC 11: Delayed fade-in animation
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={
+        shouldReduceMotion
+          ? { duration: 0 }
+          : {
+              duration: ANIMATION_TIMING.SPINNER_FADE_DURATION,
+              delay: ANIMATION_TIMING.SPINNER_DELAY,
+            }
+      }
     >
       <svg
-        className="animate-spin"
+        className="animate-spin motion-reduce:animate-none"
         width={size}
         height={size}
         viewBox="0 0 24 24"
@@ -54,6 +78,6 @@ export function Spinner({
         />
       </svg>
       <span className="sr-only">Loading...</span>
-    </div>
+    </motion.div>
   );
 }

@@ -27,7 +27,7 @@
 
 import { useCallback, useMemo } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Bitcoin,
   Lock,

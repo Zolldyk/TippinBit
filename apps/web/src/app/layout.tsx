@@ -6,6 +6,7 @@ import { Web3Provider } from "@/components/providers/Web3Provider";
 import { Web3ErrorBoundary } from "@/components/providers/Web3ErrorBoundary";
 import { WebVitalsInit } from "@/components/providers/WebVitalsInit";
 import { Header } from "@/components/organisms/Header";
+import { SkipLink } from "@/components/atoms/SkipLink";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,11 +37,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        <SkipLink />
         <WebVitalsInit />
         <Web3ErrorBoundary>
           <Web3Provider>
             <Header />
-            {children}
+            <main id="main-content">
+              {children}
+            </main>
           </Web3Provider>
         </Web3ErrorBoundary>
         <Toaster position="bottom-center" duration={3000} />

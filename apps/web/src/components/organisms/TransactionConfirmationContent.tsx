@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { Address } from 'viem';
 import type { Username } from '@/types/domain';
 import { TransactionShareButton } from '@/components/molecules/TransactionShareButton';
@@ -12,6 +11,12 @@ import { CollapsibleExplorer } from '@/components/molecules/CollapsibleExplorer'
 import { buildPaymentUrl } from '@/lib/payment-url';
 import { truncateAddress } from '@/lib/formatting';
 import { sanitizeMessage } from '@/lib/validation';
+import {
+  confirmationContainerVariants,
+  confirmationChildVariants,
+  useReducedMotion,
+  ANIMATION_TIMING,
+} from '@/lib/animations';
 
 export interface TransactionConfirmationContentProps {
   txHash: string;
@@ -36,13 +41,7 @@ export function TransactionConfirmationContent({
   timestamp,
   thankyouMessage,
 }: TransactionConfirmationContentProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Trigger fade-in animation
-  useEffect(() => {
-    const timeout = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timeout);
-  }, []);
+  const shouldReduceMotion = useReducedMotion();
 
   // Build creator payment URL (AC7, AC9)
   const creatorPaymentUrl = username
@@ -64,26 +63,53 @@ export function TransactionConfirmationContent({
   const explorerLink = `https://explorer.test.mezo.org/tx/${txHash}`;
 
   return (
-    <div
-      className={`w-full max-w-2xl transition-opacity duration-300 motion-reduce:transition-none motion-reduce:duration-0 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
+    <motion.div
+      className="w-full max-w-2xl"
+      {...(!shouldReduceMotion && { variants: confirmationContainerVariants })}
+      initial="hidden"
+      animate="visible"
     >
-      {/* Success icon with animation */}
+      {/* Success checkmark with SVG path animation (AC 9) */}
       <div className="mb-6 text-center">
-        <CheckCircle2
-          className="mx-auto h-16 w-16 text-teal-500 sm:h-20 sm:w-20"
+        <motion.svg
+          width="80"
+          height="80"
+          viewBox="0 0 100 100"
+          className="mx-auto text-teal-500"
           aria-label="Success checkmark"
-        />
+        >
+          <motion.path
+            d="M20,50 L40,70 L80,30"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{
+              duration: shouldReduceMotion
+                ? 0
+                : ANIMATION_TIMING.CHECKMARK_DRAW_DURATION,
+              ease: 'easeOut',
+            }}
+          />
+        </motion.svg>
       </div>
 
-      {/* Headline */}
-      <h1 className="mb-8 text-center text-2xl font-bold text-slate-900 sm:text-3xl">
+      {/* Headline with stagger animation (AC 9) */}
+      <motion.h1
+        {...(!shouldReduceMotion && { variants: confirmationChildVariants })}
+        className="mb-8 text-center text-2xl font-bold text-slate-900 sm:text-3xl"
+      >
         Your support means the world!
-      </h1>
+      </motion.h1>
 
-      {/* Transaction summary card */}
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      {/* Transaction summary card with stagger animation (AC 9) */}
+      <motion.div
+        {...(!shouldReduceMotion && { variants: confirmationChildVariants })}
+        className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+      >
         <div className="mb-4 border-b border-slate-100 pb-4">
           <h2 className="text-sm font-medium text-slate-500">Transaction Summary</h2>
         </div>
@@ -123,41 +149,55 @@ export function TransactionConfirmationContent({
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Thank you message (AC8, AC9) */}
-      <div className="mb-6 rounded-lg bg-teal-light/10 p-4 border border-teal-light text-center">
+      {/* Thank you message with stagger animation (AC 8, AC 9) */}
+      <motion.div
+        {...(!shouldReduceMotion && { variants: confirmationChildVariants })}
+        className="mb-6 rounded-lg bg-teal-light/10 p-4 border border-teal-light text-center"
+      >
         <p className="text-base text-gray-800">
           {displayMessage}
         </p>
-      </div>
+      </motion.div>
 
       {/* Universal sharing section - Share creator's payment link */}
       {creatorPaymentUrl && (
-        <div className="mb-6 flex justify-center">
+        <motion.div
+          {...(!shouldReduceMotion && { variants: confirmationChildVariants })}
+          className="mb-6 flex justify-center"
+        >
           <UniversalShareButtons
             creatorPaymentUrl={creatorPaymentUrl}
             creatorDisplayName={creatorDisplayName}
           />
-        </div>
+        </motion.div>
       )}
 
       {/* Transaction sharing section - Share transaction confirmation */}
-      <div className="mb-6 flex justify-center">
+      <motion.div
+        {...(!shouldReduceMotion && { variants: confirmationChildVariants })}
+        className="mb-6 flex justify-center"
+      >
         <TransactionShareButton
           {...(recipient !== undefined && { recipient })}
           {...(username !== undefined && { username })}
           txHash={txHash}
         />
-      </div>
+      </motion.div>
 
       {/* Return to creator button (only shown if external referrer detected) */}
-      <div className="mb-6 flex justify-center">
+      <motion.div
+        {...(!shouldReduceMotion && { variants: confirmationChildVariants })}
+        className="mb-6 flex justify-center"
+      >
         <ReturnButton />
-      </div>
+      </motion.div>
 
       {/* Blockchain explorer link (collapsible) */}
-      <CollapsibleExplorer txHash={txHash} explorerUrl={explorerLink} />
-    </div>
+      <motion.div {...(!shouldReduceMotion && { variants: confirmationChildVariants })}>
+        <CollapsibleExplorer txHash={txHash} explorerUrl={explorerLink} />
+      </motion.div>
+    </motion.div>
   );
 }

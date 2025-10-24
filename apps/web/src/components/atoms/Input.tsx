@@ -14,8 +14,10 @@
 'use client';
 
 import { InputHTMLAttributes, forwardRef } from 'react';
+import { motion } from 'motion/react';
 import { AlertCircle, CheckCircle, LucideIcon } from 'lucide-react';
 import { BaseComponentProps, InputValidationState } from '@/types/components';
+import { validationIconVariants, useReducedMotion } from '@/lib/animations';
 
 export interface InputProps
   extends BaseComponentProps,
@@ -62,7 +64,7 @@ const stateStyles: Record<InputValidationState, string> = {
 };
 
 const baseInputStyles =
-  'w-full min-h-[44px] px-4 py-3 rounded-[var(--radius-button)] border text-[var(--color-neutral-charcoal)] placeholder:text-[var(--color-neutral-400)] transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[var(--color-neutral-200)]';
+  'w-full min-h-[44px] px-4 py-3 rounded-[var(--radius-button)] border text-[var(--color-neutral-charcoal)] placeholder:text-[var(--color-neutral-400)] transition-colors transition-shadow duration-150 motion-reduce:transition-none focus:outline-none focus:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[var(--color-neutral-200)]';
 
 /**
  * Input component
@@ -99,6 +101,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const shouldReduceMotion = useReducedMotion();
     const inputId = id || `input-${Math.random().toString(36).slice(2, 9)}`;
     const errorId = `${inputId}-error`;
     const successId = `${inputId}-success`;
@@ -145,19 +148,37 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {(TrailingIcon || validationState !== 'default') && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
               {validationState === 'error' ? (
-                <AlertCircle
-                  size={20}
-                  strokeWidth={1.5}
-                  className="text-[var(--color-error)]"
-                  aria-hidden="true"
-                />
+                // AC 8: Error icon with shake animation
+                <motion.div
+                  {...(!shouldReduceMotion && { variants: validationIconVariants })}
+                  initial={{ opacity: 0 }}
+                  animate="error"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <AlertCircle
+                    size={20}
+                    strokeWidth={1.5}
+                    className="text-[var(--color-error)]"
+                    aria-hidden="true"
+                  />
+                </motion.div>
               ) : validationState === 'success' ? (
-                <CheckCircle
-                  size={20}
-                  strokeWidth={1.5}
-                  className="text-[var(--color-success)]"
-                  aria-hidden="true"
-                />
+                // AC 8: Success icon with slide-in animation
+                <motion.div
+                  {...(!shouldReduceMotion && { variants: validationIconVariants })}
+                  initial={{ opacity: 0 }}
+                  animate="success"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <CheckCircle
+                    size={20}
+                    strokeWidth={1.5}
+                    className="text-[var(--color-success)]"
+                    aria-hidden="true"
+                  />
+                </motion.div>
               ) : TrailingIcon ? (
                 <TrailingIcon
                   size={20}

@@ -14,8 +14,10 @@
 'use client';
 
 import { ButtonHTMLAttributes, useCallback } from 'react';
+import { motion } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { BaseComponentProps, ButtonVariant } from '@/types/components';
+import { buttonVariants, useReducedMotion } from '@/lib/animations';
 
 export interface ButtonProps
   extends BaseComponentProps,
@@ -71,6 +73,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const shouldReduceMotion = useReducedMotion();
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -82,13 +85,19 @@ export function Button({
   );
 
   return (
-    <button
+    <motion.button
       type="button"
       className={`${baseStyles} ${variantStyles[variant]} ${className}`}
       disabled={isDisabled}
       aria-busy={loading}
       aria-disabled={isDisabled}
       onClick={handleClick}
+      // AC 2, 3, 14: Hover/tap animations with reduced motion support
+      {...(!shouldReduceMotion &&
+        !isDisabled && {
+          whileHover: buttonVariants['hover'],
+          whileTap: buttonVariants['tap'],
+        })}
       {...props}
     >
       {loading && (
@@ -100,6 +109,6 @@ export function Button({
         />
       )}
       {children}
-    </button>
+    </motion.button>
   );
 }
