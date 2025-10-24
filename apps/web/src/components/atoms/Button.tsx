@@ -23,7 +23,14 @@ export interface ButtonProps
   extends BaseComponentProps,
     Omit<
       ButtonHTMLAttributes<HTMLButtonElement>,
-      'className' | 'style' | 'onDrag' | 'onDragStart' | 'onDragEnd'
+      | 'className'
+      | 'style'
+      | 'onDrag'
+      | 'onDragStart'
+      | 'onDragEnd'
+      | 'onAnimationStart'
+      | 'onAnimationEnd'
+      | 'onAnimationIteration'
     > {
   /**
    * Button variant
