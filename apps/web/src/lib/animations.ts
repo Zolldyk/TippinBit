@@ -8,7 +8,7 @@
  * @see docs/stories/3.3.story.md for requirements
  */
 
-import { Variants, Transition } from "motion/react";
+import { Variants, Transition, TargetAndTransition } from "motion/react";
 import { useReducedMotion as useMotionReducedMotion } from "motion/react";
 
 /**
@@ -60,7 +60,7 @@ export const EASING = {
  * Button animation variants (AC 2, 3, 12)
  * Desktop only hover effect, uses GPU-accelerated scale
  */
-export const buttonVariants: Variants = {
+export const buttonVariants: Record<'hover' | 'tap', TargetAndTransition> = {
   hover: {
     scale: 1.02,
     transition: {

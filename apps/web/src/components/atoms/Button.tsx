@@ -99,6 +99,15 @@ export function Button({
     [isDisabled, onClick]
   );
 
+  // AC 2, 3, 14: Hover/tap animations with reduced motion support
+  const motionProps =
+    !shouldReduceMotion && !isDisabled
+      ? {
+          whileHover: buttonVariants.hover,
+          whileTap: buttonVariants.tap,
+        }
+      : {};
+
   return (
     <motion.button
       type="button"
@@ -107,12 +116,7 @@ export function Button({
       aria-busy={loading}
       aria-disabled={isDisabled}
       onClick={handleClick}
-      // AC 2, 3, 14: Hover/tap animations with reduced motion support
-      {...(!shouldReduceMotion &&
-        !isDisabled && {
-          whileHover: buttonVariants['hover'],
-          whileTap: buttonVariants['tap'],
-        })}
+      {...motionProps}
       {...props}
     >
       {loading && (
