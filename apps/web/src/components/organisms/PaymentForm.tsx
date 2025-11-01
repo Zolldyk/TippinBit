@@ -14,7 +14,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { parseEther, formatEther, type Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { AmountInput } from '../molecules/AmountInput';
 import { QuickAmountChips } from '../molecules/QuickAmountChips';
@@ -36,6 +36,7 @@ import { useBTCPrice } from '@/hooks/useBTCPrice';
 import { parseContractError } from '@/lib/error-parser';
 import { calculateCollateralRequired } from '@/lib/btc-calculations';
 import { MUSD_ADDRESS } from '@/config/contracts';
+import { MEZO_TESTNET_CHAIN_ID } from '@/config/networks';
 
 const LARGE_AMOUNT_THRESHOLD = 100; // $100
 
@@ -90,6 +91,12 @@ export function PaymentForm({
   const [showBorrowingFlowModal, setShowBorrowingFlowModal] =
     useState<boolean>(false);
 
+  // Borrowing error state (Story 2.12)
+  const [borrowingError, setBorrowingError] = useState<{
+    message: string;
+    actionType: 'connect' | 'get-btc' | 'switch-network';
+  } | null>(null);
+
   // Failure counter state (AC7: Track repeated failures)
   const [failureCount, setFailureCount] = useState<number>(() => {
     // Load from sessionStorage on mount
@@ -102,6 +109,9 @@ export function PaymentForm({
 
   // Get connected wallet address
   const { address: walletAddress } = useAccount();
+
+  // Get current chain ID (Story 2.12)
+  const chainId = useChainId();
 
   // Router for redirects
   const router = useRouter();
@@ -163,10 +173,42 @@ export function PaymentForm({
     setAmount(selectedAmount.toFixed(2));
   }, []);
 
-  // Handle BTC borrow flow - opens explainer panel
+  // Handle BTC borrow flow - opens explainer panel with pre-flight validation (Story 2.12)
   const handleBtcBorrowFlow = useCallback(() => {
+    // Check 1: Wallet connection (AC 3)
+    if (!walletAddress) {
+      setBorrowingError({
+        message: 'Connect your wallet to tip with BTC',
+        actionType: 'connect',
+      });
+      setShowBorrowingExplainer(true);
+      return;
+    }
+
+    // Check 2: Network validation (AC 6)
+    if (chainId !== MEZO_TESTNET_CHAIN_ID) {
+      setBorrowingError({
+        message: 'Please switch to Mezo testnet to tip with BTC',
+        actionType: 'switch-network',
+      });
+      setShowBorrowingExplainer(true);
+      return;
+    }
+
+    // Check 3: BTC balance exists (AC 4)
+    if (btcBalance === null || btcBalance === BigInt(0)) {
+      setBorrowingError({
+        message: 'You need BTC to send this tip',
+        actionType: 'get-btc',
+      });
+      setShowBorrowingExplainer(true);
+      return;
+    }
+
+    // All checks passed - open normal explainer mode (AC 11)
+    setBorrowingError(null);
     setShowBorrowingExplainer(true);
-  }, []);
+  }, [walletAddress, chainId, btcBalance]);
 
   // Handle continue from explainer - opens borrowing flow modal (Story 2.4)
   const handleContinueToBorrowing = useCallback(() => {
@@ -463,6 +505,9 @@ export function PaymentForm({
         onContinue={handleContinueToBorrowing}
         tipAmount={amount}
         onReduceTip={handleReduceTip}
+        errorMode={borrowingError !== null}
+        errorMessage={borrowingError?.message}
+        errorActionType={borrowingError?.actionType}
       />
 
       {/* BTC borrowing flow modal (Story 2.4) */}

@@ -1,10 +1,10 @@
 /**
  * TipWithBtcButton - Secondary button for initiating BTC borrowing flow
- * Only visible when user has BTC balance > 0
+ * Always visible regardless of BTC balance (Story 2.12)
  *
  * Features:
- * - Progressive disclosure (hidden when BTC = 0)
- * - Info tooltip explaining borrowing concept
+ * - Always visible with static tooltip
+ * - Pre-flight validation in PaymentForm
  * - Disabled state when BTC < minimum collateral
  * - Responsive mobile layout
  */
@@ -16,43 +16,32 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { Button } from '../atoms/Button';
 
 export interface TipWithBtcButtonProps {
-  /** BTC balance in wei (18 decimals) */
+  /** BTC balance in wei (18 decimals) - kept for future use but not used for visibility */
   btcBalance: bigint | null;
   /** Whether button should be disabled */
   isDisabled: boolean;
   /** Click handler for button */
   onClick: () => void;
-  /** Minimum BTC required (formatted string) */
-  minimumBtcRequired?: string;
 }
 
 /**
  * Secondary button for initiating BTC borrowing flow
- * Only visible when user has BTC balance > 0
+ * Always visible to improve discoverability (Story 2.12)
  *
  * @example
  * <TipWithBtcButton
  *   btcBalance={parseEther('0.005')}
  *   isDisabled={false}
  *   onClick={handleBorrowFlow}
- *   minimumBtcRequired="0.000043"
  * />
  */
 export function TipWithBtcButton({
   btcBalance,
   isDisabled,
   onClick,
-  minimumBtcRequired,
 }: TipWithBtcButtonProps) {
-  // Progressive disclosure: Don't render if no BTC balance
-  if (btcBalance === null || btcBalance === BigInt(0)) {
-    return null;
-  }
-
-  // Tooltip message based on disabled state
-  const tooltipMessage = isDisabled
-    ? `Minimum ${minimumBtcRequired} BTC required for borrowing`
-    : 'Borrow MUSD using your BTC as collateral';
+  // Static tooltip message (Story 2.12 AC 7)
+  const tooltipMessage = 'Borrow MUSD using your BTC as collateral';
 
   return (
     <Tooltip.Provider>

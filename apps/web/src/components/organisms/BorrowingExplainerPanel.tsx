@@ -49,9 +49,11 @@ import {
   calculateMaxTipFromCollateral,
 } from '@/lib/btc-calculations';
 import { formatTimeAgo } from '@/lib/formatting';
-import { useAccount } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
 import { useBTCPrice } from '@/hooks/useBTCPrice';
 import { useBTCBalance } from '@/hooks/useBTCBalance';
+import { MEZO_TESTNET_CHAIN_ID } from '@/config/networks';
+import { toast } from 'sonner';
 
 export interface BorrowingExplainerPanelProps {
   /** Whether the panel is open */
@@ -64,6 +66,12 @@ export interface BorrowingExplainerPanelProps {
   tipAmount: string;
   /** Optional callback when user clicks "Reduce Tip" button */
   onReduceTip?: (newAmount: bigint) => void;
+  /** Whether to show error mode instead of explainer (Story 2.12) */
+  errorMode?: boolean;
+  /** Error message to display in error mode */
+  errorMessage?: string;
+  /** Type of action needed to resolve error */
+  errorActionType?: 'connect' | 'get-btc' | 'switch-network';
 }
 
 export function BorrowingExplainerPanel({
@@ -72,9 +80,15 @@ export function BorrowingExplainerPanel({
   onContinue,
   tipAmount,
   onReduceTip,
+  errorMode = false,
+  errorMessage,
+  errorActionType,
 }: BorrowingExplainerPanelProps) {
   // Get connected wallet address
   const { address: walletAddress } = useAccount();
+
+  // Network switching hook (Story 2.12)
+  const { switchChain } = useSwitchChain();
 
   // Fetch real-time BTC price
   const {
@@ -137,6 +151,149 @@ export function BorrowingExplainerPanel({
   const handleUseMusd = useCallback(() => {
     onClose();
   }, [onClose]);
+
+  // Handle network switch (Story 2.12 AC 6, 19)
+  const handleSwitchNetwork = useCallback(async () => {
+    try {
+      await switchChain({ chainId: MEZO_TESTNET_CHAIN_ID });
+      // On success, close error panel - user can now retry BTC flow
+      onClose();
+    } catch (error) {
+      // User rejected or switch failed
+      console.error('Network switch failed:', error);
+      // Close panel and show toast notification
+      onClose();
+      toast.error('Network switch cancelled. Please switch to Mezo testnet manually to continue.');
+    }
+  }, [switchChain, onClose]);
+
+  // Error mode rendering (Story 2.12 AC 8, 9)
+  if (errorMode && errorMessage && errorActionType) {
+    const errorContent = (
+      <>
+        <Dialog.Title asChild>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[var(--color-coral)] mb-4 text-center sm:text-left">
+            Action Required
+          </h2>
+        </Dialog.Title>
+
+        <Dialog.Description asChild>
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-red-800 text-base">{errorMessage}</p>
+            </div>
+          </div>
+        </Dialog.Description>
+
+        {/* Actionable buttons based on error type */}
+        <div className="flex gap-3 justify-end flex-col sm:flex-row">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="w-full sm:w-auto order-2 sm:order-1"
+          >
+            Cancel
+          </Button>
+
+          {errorActionType === 'connect' && (
+            <Button
+              variant="primary"
+              onClick={() => {
+                // Trigger wallet connection - reuse WalletConnector logic
+                // For now, close panel and let user connect via header
+                onClose();
+              }}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
+              Connect Wallet
+            </Button>
+          )}
+
+          {errorActionType === 'get-btc' && (
+            <Button
+              variant="primary"
+              onClick={() => {
+                window.open('https://faucet.test.mezo.org', '_blank', 'noopener,noreferrer');
+              }}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
+              Get Testnet BTC
+            </Button>
+          )}
+
+          {errorActionType === 'switch-network' && (
+            <Button
+              variant="primary"
+              onClick={handleSwitchNetwork}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
+              Switch to Mezo Testnet
+            </Button>
+          )}
+        </div>
+      </>
+    );
+
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <Dialog.Portal>
+              <Dialog.Overlay asChild>
+                <motion.div
+                  className="fixed inset-0 bg-black/50 z-40"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </Dialog.Overlay>
+
+              {/* Desktop Modal */}
+              <Dialog.Content asChild>
+                <motion.div
+                  className="hidden sm:block fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-8 w-full max-w-[600px] z-50"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Dialog.Close asChild>
+                    <button
+                      className="absolute top-4 right-4 text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-600)] transition-colors"
+                      aria-label="Close"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </Dialog.Close>
+                  {errorContent}
+                </motion.div>
+              </Dialog.Content>
+
+              {/* Mobile Bottom Sheet */}
+              <Dialog.Content asChild>
+                <motion.div
+                  className="block sm:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 z-50"
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  drag="y"
+                  dragConstraints={{ top: 0, bottom: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="w-12 h-1 bg-[var(--color-neutral-300)] rounded-full mx-auto mb-6" />
+                  {errorContent}
+                </motion.div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+        )}
+      </AnimatePresence>
+    );
+  }
 
   // Loading state
   if (isFetching && !btcPrice) {

@@ -17,7 +17,8 @@ describe('TipWithBtcButton', () => {
     expect(screen.getByText('Tip with BTC')).toBeInTheDocument();
   });
 
-  it('does not render when BTC balance = 0', () => {
+  // Story 2.12: Button now always renders regardless of balance
+  it('renders when BTC balance = 0', () => {
     render(
       <TipWithBtcButton
         btcBalance={BigInt(0)}
@@ -26,10 +27,10 @@ describe('TipWithBtcButton', () => {
       />
     );
 
-    expect(screen.queryByText('Tip with BTC')).not.toBeInTheDocument();
+    expect(screen.getByText('Tip with BTC')).toBeInTheDocument();
   });
 
-  it('does not render when BTC balance is null', () => {
+  it('renders when BTC balance is null', () => {
     render(
       <TipWithBtcButton
         btcBalance={null}
@@ -38,7 +39,7 @@ describe('TipWithBtcButton', () => {
       />
     );
 
-    expect(screen.queryByText('Tip with BTC')).not.toBeInTheDocument();
+    expect(screen.getByText('Tip with BTC')).toBeInTheDocument();
   });
 
   it('shows correct label "Tip with BTC"', () => {
@@ -67,7 +68,8 @@ describe('TipWithBtcButton', () => {
     expect(button).toHaveClass('text-amber-600');
   });
 
-  it('shows tooltip on hover with borrowing explanation', async () => {
+  // Story 2.12: Tooltip now shows static message
+  it('shows static tooltip message on hover', async () => {
     const user = userEvent.setup();
 
     render(
@@ -83,17 +85,17 @@ describe('TipWithBtcButton', () => {
 
     // Wait for tooltip to appear - query all text including hidden
     await waitFor(() => {
-      expect(screen.getByText(/Borrow MUSD using your BTC as collateral/i, { ignore: 'span[role="tooltip"]' })).toBeInTheDocument();
+      expect(screen.getByText('Borrow MUSD using your BTC as collateral', { ignore: 'span[role="tooltip"]' })).toBeInTheDocument();
     });
   });
 
-  it('is disabled when BTC < minimum required', () => {
+  // Story 2.12: Button is disabled when isDisabled prop is true (for insufficient balance)
+  it('is disabled when isDisabled prop is true', () => {
     render(
       <TipWithBtcButton
         btcBalance={parseEther('0.0001')}
         isDisabled={true}
         onClick={() => {}}
-        minimumBtcRequired="0.0043"
       />
     );
 
@@ -101,7 +103,7 @@ describe('TipWithBtcButton', () => {
     expect(button).toBeDisabled();
   });
 
-  it('disabled tooltip shows minimum amount message', async () => {
+  it('shows static tooltip even when disabled', async () => {
     const user = userEvent.setup();
 
     render(
@@ -109,20 +111,19 @@ describe('TipWithBtcButton', () => {
         btcBalance={parseEther('0.0001')}
         isDisabled={true}
         onClick={() => {}}
-        minimumBtcRequired="0.000043"
       />
     );
 
     const button = screen.getByRole('button', { name: /Tip with BTC/i });
     await user.hover(button);
 
-    // Wait for tooltip to appear - query all text including hidden
+    // Wait for tooltip to appear - static message even when disabled
     await waitFor(() => {
-      expect(screen.getByText(/Minimum 0.000043 BTC required for borrowing/i, { ignore: 'span[role="tooltip"]' })).toBeInTheDocument();
+      expect(screen.getByText('Borrow MUSD using your BTC as collateral', { ignore: 'span[role="tooltip"]' })).toBeInTheDocument();
     });
   });
 
-  it('calls onClick handler when clicked', async () => {
+  it('calls onClick handler when clicked and not disabled', async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
 
@@ -138,6 +139,24 @@ describe('TipWithBtcButton', () => {
     await user.click(button);
 
     expect(handleClick).toHaveBeenCalledOnce();
+  });
+
+  it('does not call onClick handler when disabled', async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <TipWithBtcButton
+        btcBalance={parseEther('0.005')}
+        isDisabled={true}
+        onClick={handleClick}
+      />
+    );
+
+    const button = screen.getByText('Tip with BTC');
+    await user.click(button);
+
+    expect(handleClick).not.toHaveBeenCalled();
   });
 
   it('has Info icon displayed', () => {
