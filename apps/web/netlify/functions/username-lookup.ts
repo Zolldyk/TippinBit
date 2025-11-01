@@ -53,7 +53,7 @@ export const handler: Handler = async (
 
   try {
     // Extract username from query parameters
-    let username = event.queryStringParameters?.username;
+    let username = event.queryStringParameters?.['username'];
 
     if (!username) {
       return {
