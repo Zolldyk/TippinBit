@@ -21,8 +21,12 @@ import type { Address, PaymentUrlParams } from '@/types/domain';
  * @throws Error if neither username nor address is provided
  */
 export function buildPaymentUrl(params: PaymentUrlParams): string {
+  // Use window.location.origin when in browser (ensures correct domain)
+  // Fall back to env variable for SSR/build time
   const baseUrl =
-    process.env['NEXT_PUBLIC_BASE_URL'] || 'https://tippinbit.com';
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env['NEXT_PUBLIC_BASE_URL'] || 'https://tippinbit.netlify.app');
 
   if (params.username) {
     // Username-based URL (AC3)
