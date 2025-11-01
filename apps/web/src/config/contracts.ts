@@ -45,6 +45,9 @@ export const BTC_ADDRESS = validateBTCAddress();
 /**
  * ERC-20 ABI for token interactions (MUSD and BTC).
  * Includes balanceOf (view), transfer (write), and approve (write) functions.
+ *
+ * Note: transfer and approve have no outputs to handle non-standard ERC20s
+ * that don't return boolean values (common in older implementations).
  */
 export const ERC20_ABI = [
   {
@@ -62,7 +65,7 @@ export const ERC20_ABI = [
       { name: 'to', type: 'address' },
       { name: 'amount', type: 'uint256' },
     ],
-    outputs: [{ name: 'success', type: 'bool' }],
+    outputs: [],
   },
   {
     name: 'approve',
@@ -72,7 +75,7 @@ export const ERC20_ABI = [
       { name: 'spender', type: 'address' },
       { name: 'amount', type: 'uint256' },
     ],
-    outputs: [{ name: 'success', type: 'bool' }],
+    outputs: [],
   },
 ] as const;
 
