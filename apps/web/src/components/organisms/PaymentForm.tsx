@@ -505,9 +505,11 @@ export function PaymentForm({
         onContinue={handleContinueToBorrowing}
         tipAmount={amount}
         onReduceTip={handleReduceTip}
-        errorMode={borrowingError !== null}
-        errorMessage={borrowingError?.message}
-        errorActionType={borrowingError?.actionType}
+        {...(borrowingError && {
+          errorMode: true,
+          errorMessage: borrowingError.message,
+          errorActionType: borrowingError.actionType,
+        })}
       />
 
       {/* BTC borrowing flow modal (Story 2.4) */}
