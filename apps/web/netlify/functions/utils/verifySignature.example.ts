@@ -7,7 +7,7 @@
  * IMPORTANT: This is a documentation example only. Do not deploy this file.
  */
 
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 import { verifyWalletSignature, standardizeMessage } from './verifySignature';
 
 /**
@@ -17,8 +17,7 @@ import { verifyWalletSignature, standardizeMessage } from './verifySignature';
  * of their wallet address through signature verification.
  */
 export const handler: Handler = async (
-  event: HandlerEvent,
-  context: HandlerContext
+  event: HandlerEvent
 ) => {
   // 1. Parse request body
   const body = JSON.parse(event.body || '{}');
@@ -88,8 +87,7 @@ export const handler: Handler = async (
  * of their wallet address.
  */
 export const profileUpdateHandler: Handler = async (
-  event: HandlerEvent,
-  context: HandlerContext
+  event: HandlerEvent
 ) => {
   const body = JSON.parse(event.body || '{}');
   const { walletAddress, signature, profileData } = body;
