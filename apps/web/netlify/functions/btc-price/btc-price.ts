@@ -23,7 +23,7 @@ interface BTCPriceResponse {
   cached: boolean;
 }
 
-export const handler: Handler = async (event, context) => {
+export const handler: Handler = async (event) => {
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',

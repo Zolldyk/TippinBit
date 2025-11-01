@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getUsernameRecord, redis } from './utils/redis';
 
 // CORS and caching headers
@@ -28,8 +28,7 @@ const headers = {
  * - 500: Internal server error
  */
 export const handler: Handler = async (
-  event: HandlerEvent,
-  context: HandlerContext
+  event: HandlerEvent
 ) => {
   // Handle OPTIONS preflight requests
   if (event.httpMethod === 'OPTIONS') {

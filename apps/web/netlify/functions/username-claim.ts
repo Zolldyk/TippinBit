@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 import { z } from 'zod';
 import { verifyWalletSignature, standardizeMessage } from './utils/verifySignature';
 import { redis, type UsernameRecord } from './utils/redis';
@@ -58,8 +58,7 @@ const headers = {
  * - 500: Internal server error
  */
 export const handler: Handler = async (
-  event: HandlerEvent,
-  context: HandlerContext
+  event: HandlerEvent
 ) => {
   // Handle OPTIONS preflight requests
   if (event.httpMethod === 'OPTIONS') {
