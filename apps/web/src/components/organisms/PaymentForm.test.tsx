@@ -71,12 +71,14 @@ import { useGasEstimation } from '@/hooks/useGasEstimation';
 import { useMUSDTransfer } from '@/hooks/useMUSDTransfer';
 import { MEZO_TESTNET_CHAIN_ID } from '@/config/networks';
 
+type MockedFunction = ReturnType<typeof vi.fn>;
+
 describe('PaymentForm - Story 2.12 Integration Tests', () => {
   const mockRecipient = '0x1234567890123456789012345678901234567890' as `0x${string}`;
 
   beforeEach(() => {
     // Default mock implementations
-    (useBalanceMonitor as any).mockReturnValue({
+    (useBalanceMonitor as MockedFunction).mockReturnValue({
       balance: parseEther('100'),
       balanceUsd: 100,
       isLoading: false,
@@ -84,7 +86,7 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
       updateOptimistically: vi.fn(),
     });
 
-    (useBTCPrice as any).mockReturnValue({
+    (useBTCPrice as MockedFunction).mockReturnValue({
       btcPrice: parseEther('50000'),
       isStale: false,
       isFetching: false,
@@ -93,14 +95,14 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
       timestamp: Date.now(),
     });
 
-    (useGasEstimation as any).mockReturnValue({
+    (useGasEstimation as MockedFunction).mockReturnValue({
       gasEstimate: parseEther('0.01'),
       gasEstimateUsd: 0.01,
       isLoading: false,
       gasEstimationFailed: false,
     });
 
-    (useMUSDTransfer as any).mockReturnValue({
+    (useMUSDTransfer as MockedFunction).mockReturnValue({
       sendTransaction: vi.fn(),
       txHash: null,
       state: 'idle',
@@ -118,9 +120,9 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
     const user = userEvent.setup();
 
     // No wallet connected
-    (useAccount as any).mockReturnValue({ address: undefined });
-    (useChainId as any).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
-    (useBTCBalance as any).mockReturnValue({ btcBalance: parseEther('1') });
+    (useAccount as MockedFunction).mockReturnValue({ address: undefined });
+    (useChainId as MockedFunction).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
+    (useBTCBalance as MockedFunction).mockReturnValue({ btcBalance: parseEther('1') });
 
     render(<PaymentForm recipientAddress={mockRecipient} />);
 
@@ -140,9 +142,9 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
     const user = userEvent.setup();
 
     // Wallet connected but no BTC
-    (useAccount as any).mockReturnValue({ address: '0xuser' });
-    (useChainId as any).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
-    (useBTCBalance as any).mockReturnValue({ btcBalance: BigInt(0) });
+    (useAccount as MockedFunction).mockReturnValue({ address: '0xuser' });
+    (useChainId as MockedFunction).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
+    (useBTCBalance as MockedFunction).mockReturnValue({ btcBalance: BigInt(0) });
 
     render(<PaymentForm recipientAddress={mockRecipient} />);
 
@@ -162,9 +164,9 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
     const user = userEvent.setup();
 
     // Wallet connected but wrong network
-    (useAccount as any).mockReturnValue({ address: '0xuser' });
-    (useChainId as any).mockReturnValue(1); // Ethereum mainnet
-    (useBTCBalance as any).mockReturnValue({ btcBalance: parseEther('1') });
+    (useAccount as MockedFunction).mockReturnValue({ address: '0xuser' });
+    (useChainId as MockedFunction).mockReturnValue(1); // Ethereum mainnet
+    (useBTCBalance as MockedFunction).mockReturnValue({ btcBalance: parseEther('1') });
 
     render(<PaymentForm recipientAddress={mockRecipient} />);
 
@@ -184,9 +186,9 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
     const user = userEvent.setup();
 
     // Wallet connected, correct network, has BTC
-    (useAccount as any).mockReturnValue({ address: '0xuser' });
-    (useChainId as any).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
-    (useBTCBalance as any).mockReturnValue({ btcBalance: parseEther('1') });
+    (useAccount as MockedFunction).mockReturnValue({ address: '0xuser' });
+    (useChainId as MockedFunction).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
+    (useBTCBalance as MockedFunction).mockReturnValue({ btcBalance: parseEther('1') });
 
     render(<PaymentForm recipientAddress={mockRecipient} />);
 
@@ -205,10 +207,10 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
     const user = userEvent.setup();
     const mockSendTransaction = vi.fn();
 
-    (useAccount as any).mockReturnValue({ address: '0xuser' });
-    (useChainId as any).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
-    (useBTCBalance as any).mockReturnValue({ btcBalance: parseEther('1') });
-    (useMUSDTransfer as any).mockReturnValue({
+    (useAccount as MockedFunction).mockReturnValue({ address: '0xuser' });
+    (useChainId as MockedFunction).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
+    (useBTCBalance as MockedFunction).mockReturnValue({ btcBalance: parseEther('1') });
+    (useMUSDTransfer as MockedFunction).mockReturnValue({
       sendTransaction: mockSendTransaction,
       txHash: null,
       state: 'idle',
@@ -242,9 +244,9 @@ describe('PaymentForm - Story 2.12 Integration Tests', () => {
     const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 
     // Setup: no BTC balance
-    (useAccount as any).mockReturnValue({ address: '0xuser' });
-    (useChainId as any).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
-    (useBTCBalance as any).mockReturnValue({ btcBalance: BigInt(0) });
+    (useAccount as MockedFunction).mockReturnValue({ address: '0xuser' });
+    (useChainId as MockedFunction).mockReturnValue(MEZO_TESTNET_CHAIN_ID);
+    (useBTCBalance as MockedFunction).mockReturnValue({ btcBalance: BigInt(0) });
 
     render(<PaymentForm recipientAddress={mockRecipient} />);
 

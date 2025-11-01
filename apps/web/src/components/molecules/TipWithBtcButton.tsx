@@ -36,7 +36,7 @@ export interface TipWithBtcButtonProps {
  * />
  */
 export function TipWithBtcButton({
-  btcBalance,
+  btcBalance: _btcBalance,
   isDisabled,
   onClick,
 }: TipWithBtcButtonProps) {
