@@ -95,7 +95,7 @@ export const handler: Handler = async (
     };
 
     if (thankyouMessage) {
-      response.thankyouMessage = thankyouMessage as string;
+      response['thankyouMessage'] = thankyouMessage as string;
     }
 
     return {
