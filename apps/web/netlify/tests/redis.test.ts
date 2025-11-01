@@ -179,11 +179,11 @@ describe('Redis client initialization', () => {
     // The actual check happens during module initialization, so we can't
     // test it easily without reloading the module. This is a placeholder
     // for documentation purposes.
-    expect(process.env.UPSTASH_REDIS_REST_URL).toBeDefined();
+    expect(process.env['UPSTASH_REDIS_REST_URL']).toBeDefined();
   });
 
   it('requires UPSTASH_REDIS_REST_TOKEN environment variable', () => {
     // Same as above - actual validation happens at module init time
-    expect(process.env.UPSTASH_REDIS_REST_TOKEN).toBeDefined();
+    expect(process.env['UPSTASH_REDIS_REST_TOKEN']).toBeDefined();
   });
 });
