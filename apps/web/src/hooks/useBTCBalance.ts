@@ -38,10 +38,27 @@ export function useBTCBalance({ address }: UseBTCBalanceProps): UseBTCBalanceRet
     },
   });
 
+  // Debug logging for BTC balance detection
+  console.log('[useBTCBalance] Debug Info:', {
+    walletAddress: address,
+    btcContractAddress: BTC_ADDRESS,
+    queryEnabled: !!address && !!BTC_ADDRESS,
+    rawBalance: balance,
+    isLoading,
+    isBTCAddressConfigured: !!BTC_ADDRESS,
+  });
+
   // Format balance from wei (18 decimals) to display string
   const btcBalanceFormatted = balance
     ? parseFloat(formatUnits(balance, 18)).toFixed(6) // Show 6 decimals for BTC
     : null;
+
+  if (balance !== undefined) {
+    console.log('[useBTCBalance] Balance detected:', {
+      raw: balance.toString(),
+      formatted: btcBalanceFormatted,
+    });
+  }
 
   return {
     btcBalance: balance ?? null,

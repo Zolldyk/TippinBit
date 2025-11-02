@@ -175,8 +175,18 @@ export function PaymentForm({
 
   // Handle BTC borrow flow - opens explainer panel with pre-flight validation (Story 2.12)
   const handleBtcBorrowFlow = useCallback(() => {
+    console.log('[PaymentForm] BTC borrow flow validation:', {
+      walletAddress,
+      chainId,
+      expectedChainId: MEZO_TESTNET_CHAIN_ID,
+      btcBalance: btcBalance?.toString(),
+      btcBalanceIsNull: btcBalance === null,
+      btcBalanceIsZero: btcBalance === BigInt(0),
+    });
+
     // Check 1: Wallet connection (AC 3)
     if (!walletAddress) {
+      console.log('[PaymentForm] Validation failed: No wallet connected');
       setBorrowingError({
         message: 'Connect your wallet to tip with BTC',
         actionType: 'connect',
@@ -187,6 +197,10 @@ export function PaymentForm({
 
     // Check 2: Network validation (AC 6)
     if (chainId !== MEZO_TESTNET_CHAIN_ID) {
+      console.log('[PaymentForm] Validation failed: Wrong network', {
+        currentChainId: chainId,
+        expectedChainId: MEZO_TESTNET_CHAIN_ID,
+      });
       setBorrowingError({
         message: 'Please switch to Mezo testnet to tip with BTC',
         actionType: 'switch-network',
@@ -197,6 +211,11 @@ export function PaymentForm({
 
     // Check 3: BTC balance exists (AC 4)
     if (btcBalance === null || btcBalance === BigInt(0)) {
+      console.log('[PaymentForm] Validation failed: No BTC balance', {
+        btcBalance: btcBalance?.toString(),
+        isNull: btcBalance === null,
+        isZero: btcBalance === BigInt(0),
+      });
       setBorrowingError({
         message: 'You need BTC to send this tip',
         actionType: 'get-btc',
@@ -206,6 +225,7 @@ export function PaymentForm({
     }
 
     // All checks passed - open normal explainer mode (AC 11)
+    console.log('[PaymentForm] All validations passed, opening normal explainer');
     setBorrowingError(null);
     setShowBorrowingExplainer(true);
   }, [walletAddress, chainId, btcBalance]);
